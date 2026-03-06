@@ -178,6 +178,7 @@ GAMES_DATABASE = {
     'detroit become human': list(range(1407, 1437)),
     'devil may cry 4 special edition': list(range(1244, 1259)),
     'dispatch': list(range(1311, 1321)),
+    'distant worlds 2': list(range(1644, 1651)),
     'dying light: the beast': list(range(1502, 1526)),
     'elden ring': list(range(552, 588)),
     'fallout 3': list(range(1231, 1237)),
