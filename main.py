@@ -150,146 +150,412 @@ def check_rank_update(user_id, old_downloads, new_downloads):
     return None
 
 
-# ========== БАЗА ИГР ==========
+# ========== БАЗА ВСЕХ ИГР (С АЛЬТЕРНАТИВНЫМИ НАЗВАНИЯМИ) ==========
 GAMES_DATABASE = {
+    # GTA (Grand Theft Auto) - полный набор
+    'gta 3': list(range(1088, 1091)),
+    'gta iii': list(range(1088, 1091)),
+    'grand theft auto 3': list(range(1088, 1091)),
+    'grand theft auto iii': list(range(1088, 1091)),
+
+    'gta 4': list(range(799, 811)),
+    'gta iv': list(range(799, 811)),
+    'grand theft auto 4': list(range(799, 811)),
+    'grand theft auto iv': list(range(799, 811)),
+
+    'gta 5': list(range(705, 743)),
+    'gta v': list(range(705, 743)),
+    'grand theft auto 5': list(range(705, 743)),
+    'grand theft auto v': list(range(705, 743)),
+
+    'gta san andreas': list(range(1259, 1271)),
+    'grand theft auto san andreas': list(range(1259, 1271)),
+    'gta sa': list(range(1259, 1271)),
+
+    'gta vice city': list(range(1450, 1453)),
+    'grand theft auto vice city': list(range(1450, 1453)),
+    'gta vc': list(range(1450, 1453)),
+
+    'gta liberty city stories': list(range(1082, 1085)),
+    'grand theft auto liberty city stories': list(range(1082, 1085)),
+
+    'gta vice city stories': list(range(902, 905)),
+    'grand theft auto vice city stories': list(range(902, 905)),
+
+    # Call of Duty
+    'call of duty modern warfare 2': list(range(1212, 1222)),
+    'cod modern warfare 2': list(range(1212, 1222)),
+    'modern warfare 2': list(range(1212, 1222)),
+    'cod mw2': list(range(1212, 1222)),
+
+    'call of duty ww2': list(range(521, 542)),
+    'cod ww2': list(range(521, 542)),
+    'world war 2': list(range(521, 542)),
+
+    # Far Cry
+    'far cry': list(range(1658, 1662)),
+    'farcry': list(range(1658, 1662)),
+    'far cry 1': list(range(1658, 1662)),
+
+    'far cry 2': list(range(1662, 1666)),
+    'farcry 2': list(range(1662, 1666)),
+
+    'far cry 3': list(range(783, 788)),
+    'farcry 3': list(range(783, 788)),
+
+    'far cry 4': list(range(1354, 1370)),
+    'farcry 4': list(range(1354, 1370)),
+
+    'far cry 5': list(range(242, 255)),
+    'farcry 5': list(range(242, 255)),
+
+    # The Witcher
+    'witcher 3': list(range(986, 1006)),
+    'witcher': list(range(986, 1006)),
+    'ведьмак 3': list(range(986, 1006)),
+    'ведьмак': list(range(986, 1006)),
+    'the witcher 3': list(range(986, 1006)),
+
+    # Cyberpunk
+    'cyberpunk 2077': list(range(658, 705)),
+    'cyberpunk': list(range(658, 705)),
+    'киберпанк': list(range(658, 705)),
+    'киберпанк 2077': list(range(658, 705)),
+
+    # Red Dead Redemption
+    'red dead redemption': list(range(542, 549)),
+    'rdr': list(range(542, 549)),
+    'rdr 1': list(range(542, 549)),
+
+    'red dead redemption 2': list(range(428, 486)),
+    'rdr 2': list(range(428, 486)),
+    'rdr2': list(range(428, 486)),
+
+    # Resident Evil
+    'resident evil revelations 2': list(range(788, 799)),
+    're revelations 2': list(range(788, 799)),
+
+    'resident evil resistance': list(range(1330, 1347)),
+    're resistance': list(range(1330, 1347)),
+
+    'resident evil village': list(range(826, 846)),
+    're village': list(range(826, 846)),
+    'resident evil 8': list(range(826, 846)),
+
+    # Другие популярные игры
+    'minecraft': list(range(932, 936)),
+    'майнкрафт': list(range(932, 936)),
+
+    'elden ring': list(range(552, 588)),
+    'элден ринг': list(range(552, 588)),
+
+    'dark souls 3': list(range(880, 895)),
+    'демон соулс': list(range(880, 895)),
+
+    'stalker': list(range(1326, 1330)),
+    'сталкер': list(range(1326, 1330)),
+    's.t.a.l.k.e.r.': list(range(1326, 1330)),
+    'shadow of chernobyl': list(range(1326, 1330)),
+    'тень чернобыля': list(range(1326, 1330)),
+
+    'stalker anomaly': list(range(1628, 1635)),
+    'сталкер аномали': list(range(1628, 1635)),
+    'аномали': list(range(1628, 1635)),
+
+    'half life 2': list(range(1207, 1212)),
+    'hl2': list(range(1207, 1212)),
+    'хаф лайф 2': list(range(1207, 1212)),
+
+    'portal 2': list(range(1207, 1212)),  # Если есть в канале
+
+    'left 4 dead 2': list(range(1207, 1212)),  # Если есть
+
+    'counter strike 1.6': list(range(1453, 1456)),
+    'cs 1.6': list(range(1453, 1456)),
+    'кс 1.6': list(range(1453, 1456)),
+
+    'cs go': list(range(1453, 1456)),  # Если есть
+
+    'dota 2': list(range(1453, 1456)),  # Если есть
+
+    'team fortress 2': list(range(1453, 1456)),  # Если есть
+
+    # Остальные игры из твоей базы
     'antonblast': list(range(913, 916)),
     'assassins creed': list(range(1028, 1034)),
+    'ассасин крид': list(range(1028, 1034)),
+
     'beamng drive': list(range(861, 874)),
+    'beamng': list(range(861, 874)),
+
     'beholder': list(range(823, 826)),
+    'бехолдер': list(range(823, 826)),
+
     'bendy and the ink machine': list(range(652, 655)),
+    'bendy': list(range(652, 655)),
+    'бенди': list(range(652, 655)),
+
     'bioshock remaster': list(range(1070, 1081)),
+    'bioshock': list(range(1070, 1081)),
+    'биошок': list(range(1070, 1081)),
+
     'blender': list(range(1306, 1311)),
+    'блендер': list(range(1306, 1311)),
+
     'borderlands 2': list(range(776, 783)),
+    'бордерлендс 2': list(range(776, 783)),
+
     'bully': list(range(1639, 1643)),
-    'call of duty modern 2': list(range(1212, 1222)),
-    'call of duty ww2': list(range(521, 542)),
+    'булли': list(range(1639, 1643)),
+    'canis canem edit': list(range(1639, 1643)),
+
     'caves of qud': list(range(655, 658)),
+
     'clair obscur: expedition 33': list(range(1552, 1576)),
+    'clair obscur': list(range(1552, 1576)),
+
     'construction simulator 4': list(range(1373, 1376)),
-    'counter strike 1.6': list(range(1453, 1456)),
+    'строительный симулятор 4': list(range(1373, 1376)),
+
     'cry of fear': list(range(1481, 1487)),
     'cry of fear 2012': list(range(1481, 1487)),
+
     'cuphead': list(range(817, 822)),
-    'cyberpunk 2077': list(range(658, 705)),
-    'dark souls 3': list(range(880, 895)),
+    'капхед': list(range(817, 822)),
+
     'dead space': list(range(1576, 1581)),
     'dead space remake': list(range(1581, 1600)),
-    'detroit': list(range(1407, 1437)),
+    'дед спейс': list(range(1576, 1581)),
+
     'detroit become human': list(range(1407, 1437)),
-    'devil may cry 4 special edition': list(range(1244, 1259)),
+    'detroit': list(range(1407, 1437)),
+    'детройт': list(range(1407, 1437)),
+
+    'devil may cry 4': list(range(1244, 1259)),
+    'dmc 4': list(range(1244, 1259)),
+    'дмс 4': list(range(1244, 1259)),
+
     'dispatch': list(range(1311, 1321)),
+
     'distant worlds 2': list(range(1644, 1651)),
+
+    'dying light': list(range(751, 776)),
     'dying light: the beast': list(range(1502, 1526)),
-    'elden ring': list(range(552, 588)),
+
     'fallout 3': list(range(1231, 1237)),
+    'фоллаут 3': list(range(1231, 1237)),
+
     'fallout 4': list(range(1277, 1297)),
-    'far cry': list(range(1658, 1662)),
-    'far cry 2': list(range(1662, 1666)),
-    'far cry 3': list(range(783, 788)),
-    'far cry 4': list(range(1354, 1370)),
-    'far cry 5': list(range(242, 255)),
+    'фоллаут 4': list(range(1277, 1297)),
+
     'farm frenzy': list(range(1456, 1459)),
+    'ферма': list(range(1456, 1459)),
+
     'fifa 17': list(range(916, 932)),
+    'фифа 17': list(range(916, 932)),
+
     'finding frankie': list(range(622, 627)),
+
     'five nights at freddys': list(range(948, 951)),
+    'fnaf': list(range(948, 951)),
+    'фнаф': list(range(948, 951)),
+
     'five nights at freddys secret of the mimic': list(range(1462, 1474)),
+    'fnaf secret of the mimic': list(range(1462, 1474)),
+
     'fl studio 25': list(range(1153, 1157)),
+    'fl studio': list(range(1153, 1157)),
+
     'friday night funkin': list(range(748, 751)),
+    'fnf': list(range(748, 751)),
+
     'frostpunk': list(range(1222, 1229)),
     'frostpunk 2': list(range(1619, 1628)),
+
     'garrys mod': list(range(858, 861)),
+    'gmod': list(range(858, 861)),
+
     'ghost of tsushima': list(range(1527, 1552)),
+    'призрак цусимы': list(range(1527, 1552)),
+
     'ghostrunner': list(range(1692, 1702)),
+    'гострайнер': list(range(1692, 1702)),
+
     'goat simulator': list(range(618, 622)),
-    'Grand Theft Auto III': list(range(1088, 1091)),
-    'Grand Theft Auto IV': list(range(799, 811)),
-    'Grand Theft Auto: Liberty City Stories': list(range(1082, 1085)),
-    'Grand Theft Auto: San Andreas': list(range(1259, 1271)),
-    'Grand Theft Auto V': list(range(705, 743)),
-    'Grand Theft Auto: Vice City': list(range(1450, 1453)),
-    'Grand Theft Auto: Vice City Stories': list(range(902, 905)),
-    'half life 2': list(range(1207, 1212)),
+    'симулятор козла': list(range(618, 622)),
+
     'hard time 3': list(range(1006, 1010)),
+
     'hatred': list(range(1667, 1670)),
+
     'hearts of iron 4': list(range(743, 748)),
+    'hoi4': list(range(743, 748)),
+
     'hearts of iron 4: ultimate bundle': list(range(1497, 1502)),
+    'hoi4 ultimate': list(range(1497, 1502)),
+
     'hitman': list(range(962, 986)),
+    'хитман': list(range(962, 986)),
+
     'hitman blood money': list(range(951, 961)),
+
     'hollow knight': list(range(1060, 1063)),
+    'холлоу найт': list(range(1060, 1063)),
+
     'hollow knight: silksong': list(range(1600, 1603)),
+    'hollow knight silksong': list(range(1600, 1603)),
+
     'hotline miami': list(range(1085, 1088)),
+    'хотлайн майами': list(range(1085, 1088)),
+
     'hotline miami 2': [1159, 1160],
+    'хотлайн майами 2': [1159, 1160],
+
     'humanit z': list(range(1096, 1111)),
+
     'hytale': list(range(1398, 1403)),
+
     'jewel match': list(range(234, 237)),
+
     'korsary 3': list(range(1370, 1373)),
+    'корсары 3': list(range(1370, 1373)),
+
     'little nightmares 3': list(range(174, 183)),
+    'little nightmares iii': list(range(174, 183)),
+
     'lonarpg': list(range(1447, 1450)),
+
     'mafia 1': list(range(1241, 1244)),
+    'mafia i': list(range(1241, 1244)),
+    'мафия 1': list(range(1241, 1244)),
+
     'mafia 2': list(range(942, 948)),
+    'мафия 2': list(range(942, 948)),
+
     'metro 2033': list(range(1051, 1057)),
+    'метро 2033': list(range(1051, 1057)),
+
     'metro last light redux': list(range(1606, 1612)),
-    'minecraft': list(range(932, 936)),
+    'метро last light': list(range(1606, 1612)),
+
     'my gaming club': list(range(811, 814)),
+
     'my summer car': list(range(1441, 1444)),
+    'мой летний авто': list(range(1441, 1444)),
+
     'my winter car': list(range(1347, 1350)),
+    'мой зимний авто': list(range(1347, 1350)),
+
     'mysided': list(range(1057, 1060)),
+
+    'nier automata': list(range(164, 174)),
     'nier: automata': list(range(164, 174)),
+    'ниер': list(range(164, 174)),
+
     'nier replicant': list(range(1670, 1683)),
+    'ниер репликант': list(range(1670, 1683)),
+
     'no im not a human': list(range(517, 521)),
+
     'one shot': list(range(1065, 1070)),
+
     'orion sandbox': list(range(814, 817)),
+
     'palworld': list(range(202, 217)),
-    'payday: the heist': list(range(876, 880)),
+    'палворлд': list(range(202, 217)),
+
+    'payday the heist': list(range(876, 880)),
+    'пейдэй': list(range(876, 880)),
+
     'people playground': list(range(1603, 1606)),
+
     'plants vs zombies': list(range(549, 552)),
+    'растения против зомби': list(range(549, 552)),
+
     'portal knights': list(range(1237, 1240)),
+
     'postal 2': list(range(1615, 1618)),
+
     'project zomboid': list(range(1093, 1096)),
+    'зомбоид': list(range(1093, 1096)),
+
     'prototype 1': list(range(895, 902)),
+    'prototype': list(range(895, 902)),
+    'прототип': list(range(895, 902)),
+
     'prototype 2': list(range(1044, 1051)),
+    'прототип 2': list(range(1044, 1051)),
+
     'quasimorph': list(range(589, 592)),
-    'red dead redemption': list(range(542, 549)),
-    'red dead redemption 2': list(range(428, 486)),
-    'resident evil revelations 2': list(range(788, 799)),
-    'resident evil resistance': list(range(1330, 1347)),
-    'resident evil village': list(range(826, 846)),
+
     'rimworld': list(range(1298, 1302)),
+    'римворлд': list(range(1298, 1302)),
+
     'risk of rain 2': list(range(1612, 1615)),
+
     'rock star life simulator': list(range(184, 187)),
-    'stalker anomaly': list(range(1628, 1635)),
-    'stalker shadow of chernobyl': list(range(1326, 1330)),
+
     'sally face': list(range(628, 633)),
+
     'scorn': list(range(217, 228)),
+
     'slim rancher': list(range(853, 858)),
+
     'slime rancher 2': list(range(1323, 1326)),
+
     'spider man remastered': list(range(486, 517)),
+    'spider man': list(range(486, 517)),
+    'человек паук': list(range(486, 517)),
+
     'stray': list(range(936, 942)),
+    'кот': list(range(936, 942)),
+
     'streets of rogue 2': list(range(1041, 1044)),
+
     'system shock 2 remaster': list(range(187, 193)),
+
     'teardown': list(range(906, 913)),
+
     'terraria': list(range(1459, 1462)),
+    'террария': list(range(1459, 1462)),
+
     'terraria 1.4.4.9': list(range(1350, 1353)),
+
     'the forest': list(range(633, 636)),
+    'forest': list(range(633, 636)),
+
     'the last of us': list(range(1119, 1153)),
+    'last of us': list(range(1119, 1153)),
+
     'the long drive': list(range(1444, 1447)),
+
     'the spike': list(range(846, 853)),
+
     'third crisis': list(range(1302, 1306)),
+
     'tomb raider 2013': list(range(1487, 1497)),
+    'tomb raider': list(range(1487, 1497)),
+    'лара крофт': list(range(1487, 1497)),
+
     'uber soldier': list(range(197, 202)),
+
     'undertale': list(range(1376, 1379)),
+    'андертейл': list(range(1376, 1379)),
+
     'warhammer 40000 gladius relics of war': list(range(1702, 1706)),
     'warhammer gladius': list(range(1702, 1706)),
+
     'watch dogs 2': list(range(1010, 1028)),
-    'witcher 3': list(range(986, 1006)),
+    'watch dogs': list(range(1010, 1028)),
+
     'world box': list(range(1036, 1041)),
     'worldbox': list(range(1036, 1041)),
+
     'bad cheese': list(range(1651, 1655)),
     'badcheese': list(range(1651, 1655)),
+
     'chesscraft': list(range(1655, 1658)),
     'chess craft': list(range(1655, 1658)),
-    'строительный симулятор 4': list(range(1373, 1376)),
-    'корсары 3': list(range(1370, 1373)),
 }
 
 
