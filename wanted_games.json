@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Grand Theft Auto VI",
+    "reason": "Самая ожидаемая игра",
+    "steam_id": null,
+    "cracked": false
+  },
+  {
+    "name": "Resident Evil 9",
+    "reason": "Новый хоррор",
+    "steam_id": null,
+    "cracked": false
+  },
+  {
+    "name": "The Witcher 4",
+    "reason": "Польский стриптиз",
+    "steam_id": null,
+    "cracked": false
+  },
+  {
+    "name": "Half-Life 3",
+    "reason": "Мемы, мемы",
+    "steam_id": null,
+    "cracked": false
+  },
+  {
+    "name": "Doom: The Dark Ages",
+    "reason": "Адский шутер",
+    "steam_id": 301234,
+    "cracked": true
+  },
+  {
+    "name": "Crimson Desert",
+    "reason": "Корейская RPG",
+    "steam_id": 1674040,
+    "cracked": true
+  },
+  {
+    "name": "Borderlands 4",
+    "reason": "Лутер-шутер",
+    "steam_id": null,
+    "cracked": true
+  }
+]

@@ -10,553 +10,420 @@ from collections import Counter
 # ========== НАСТРОЙКИ ==========
 BOT_TOKEN = '8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0'
 bot = telebot.TeleBot(BOT_TOKEN)
-GAMES_CHANNEL_ID = -1003421344618  # Канал с играми
+GAMES_CHANNEL_ID = -1003421344618
 
 # Файлы данных
 ORDERS_FILE = 'orders.json'
-LIKES_FILE = 'likes.json'
-ADMINS_FILE = 'admins.json'
 USER_STATS_FILE = 'user_stats.json'
-LIKE_COOLDOWN_FILE = 'like_cooldown.json'
-GAME_STATS_FILE = 'game_stats.json'
-WEEKLY_STATS_FILE = 'weekly_stats.json'
-PREMIUM_FILE = 'premium_users.json'
-BANNED_FILE = 'banned_users.json'
-MUTED_FILE = 'muted_users.json'
-ORDER_STATS_FILE = 'order_stats.json'
-REPORTS_FILE = 'reports.json'
+ADMINS_FILE = 'admins.json'
+CRACKED_GAMES_FILE = 'cracked_games.json'
+
+# ========== ДАННЫЕ ==========
+orders = []
+user_stats = {}
+admins = ["7885915159"]
+user_states = {}
+cracked_games = []
+like_cooldowns = {}
+game_stats = {}
 
 # Константы
 LIKE_COOLDOWN_DAYS = 1000
 ORDERS_PER_PAGE = 5
-PREMIUM_CHAT_LINK = "https://t.me/+Cy47-Mts-h00ZDYy"
-PREMIUM_CONTACT = "@sweacher"
 
-# Ранги
-RANKS = {
-    1000: "👑 GABEN",
-    500: "📦 REPACKER",
-    100: "🏴‍☠️ PIRATE"
-}
+# Новый баннер для игр
+GAME_BANNER = """
+🔥 БЕЗ ВСТРОЕННЫХ ПРОГРАММ ИЛИ ВИРУСОВ
+🔥 FERWES / GAMES (https://t.me/FerwesGames)
+🔥 FERWES / GRID (https://t.me/addlist/AW1LBTA9xa45NDIy)
+"""
 
-# ========== ДАННЫЕ ==========
-orders = []
-likes_data = {}
-admins = ["7885915159"]
-user_states = {}
-user_stats = {}
-like_cooldowns = {}
-game_stats = {}
-weekly_stats = {}
-premium_users = {}
-banned_users = {}
-muted_users = {}
-order_stats = {}
-reports = []
+## ========== ПОЛНАЯ БАЗА ВСЕХ ИГР (ПО АЛФАВИТУ) ==========
 
-
-# ========== ЗАГРУЗКА/СОХРАНЕНИЕ ==========
-def load_all():
-    global orders, likes_data, admins, user_stats, like_cooldowns, game_stats, weekly_stats, premium_users, banned_users, muted_users, order_stats, reports
-
-    files = {
-        ORDERS_FILE: orders,
-        LIKES_FILE: likes_data,
-        ADMINS_FILE: admins,
-        USER_STATS_FILE: user_stats,
-        LIKE_COOLDOWN_FILE: like_cooldowns,
-        GAME_STATS_FILE: game_stats,
-        WEEKLY_STATS_FILE: weekly_stats,
-        PREMIUM_FILE: premium_users,
-        BANNED_FILE: banned_users,
-        MUTED_FILE: muted_users,
-        ORDER_STATS_FILE: order_stats,
-        REPORTS_FILE: reports
-    }
-
-    for file, data_var in files.items():
-        if os.path.exists(file):
-            try:
-                with open(file, 'r', encoding='utf-8') as f:
-                    if isinstance(data_var, list):
-                        data_var.clear()
-                        data_var.extend(json.load(f))
-                    elif isinstance(data_var, dict):
-                        data_var.clear()
-                        data_var.update(json.load(f))
-            except Exception as e:
-                print(f"Ошибка загрузки {file}: {e}")
-
-
-def save_all():
-    files = {
-        ORDERS_FILE: orders,
-        LIKES_FILE: likes_data,
-        ADMINS_FILE: admins,
-        USER_STATS_FILE: user_stats,
-        LIKE_COOLDOWN_FILE: like_cooldowns,
-        GAME_STATS_FILE: game_stats,
-        WEEKLY_STATS_FILE: weekly_stats,
-        PREMIUM_FILE: premium_users,
-        BANNED_FILE: banned_users,
-        MUTED_FILE: muted_users,
-        ORDER_STATS_FILE: order_stats,
-        REPORTS_FILE: reports
-    }
-
-    for file, data in files.items():
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            print(f"Ошибка сохранения {file}: {e}")
-
-
-# ========== ПРОВЕРКИ ==========
-def is_admin(user_id):
-    return str(user_id) in admins
-
-
-def is_premium(user_id):
-    return str(user_id) in premium_users
-
-
-def get_user_display_name(user_id, username=None, first_name=None):
-    user_id_str = str(user_id)
-    if user_id_str in premium_users:
-        prefix = premium_users[user_id_str].get('prefix', '')
-        if prefix:
-            return f"[{prefix}] {first_name or username or user_id}"
-    return first_name or username or str(user_id)
-
-
-def check_rank_update(user_id, old_downloads, new_downloads):
-    """Проверяет обновление ранга и возвращает новый ранг если есть"""
-    old_rank = None
-    new_rank = None
-
-    for threshold, rank_name in sorted(RANKS.items(), reverse=True):
-        if old_downloads >= threshold:
-            old_rank = rank_name
-            break
-
-    for threshold, rank_name in sorted(RANKS.items(), reverse=True):
-        if new_downloads >= threshold:
-            new_rank = rank_name
-            break
-
-    if new_rank and new_rank != old_rank:
-        return new_rank
-    return None
-
-
-# ========== БАЗА ВСЕХ ИГР (С АЛЬТЕРНАТИВНЫМИ НАЗВАНИЯМИ) ==========
 GAMES_DATABASE = {
-    # GTA (Grand Theft Auto) - полный набор
-    'gta 3': list(range(1088, 1091)),
-    'gta iii': list(range(1088, 1091)),
-    'grand theft auto 3': list(range(1088, 1091)),
-    'grand theft auto iii': list(range(1088, 1091)),
-
-    'gta 4': list(range(799, 811)),
-    'gta iv': list(range(799, 811)),
-    'grand theft auto 4': list(range(799, 811)),
-    'grand theft auto iv': list(range(799, 811)),
-
-    'gta 5': list(range(705, 743)),
-    'gta v': list(range(705, 743)),
-    'grand theft auto 5': list(range(705, 743)),
-    'grand theft auto v': list(range(705, 743)),
-
-    'gta san andreas': list(range(1259, 1271)),
-    'grand theft auto san andreas': list(range(1259, 1271)),
-    'gta sa': list(range(1259, 1271)),
-
-    'gta vice city': list(range(1450, 1453)),
-    'grand theft auto vice city': list(range(1450, 1453)),
-    'gta vc': list(range(1450, 1453)),
-
-    'gta liberty city stories': list(range(1082, 1085)),
-    'grand theft auto liberty city stories': list(range(1082, 1085)),
 
-    'gta vice city stories': list(range(902, 905)),
-    'grand theft auto vice city stories': list(range(902, 905)),
+    # A
+    'alan wake 2': list(range(1745, 1754)) + [1749],
+    'antonblast': list(range(913, 915)) + [1749],
+    'assassins creed': list(range(1028, 1033)) + [1749],
+    'assassins creed mirage': list(range(1805, 1814)) + [1749],
+
+    # B
+    'bad cheese': list(range(1651, 1654)) + [1749],
+    'badcheese': list(range(1651, 1654)) + [1749],
+    'baldurs gate 3': list(range(1730, 1744)) + [1749],
+    'beamng drive': list(range(861, 873)) + [1749],
+    'beholder': list(range(823, 825)) + [1749],
+    'bendy and the ink machine': list(range(652, 654)) + [1749],
+    'bioshock remaster': list(range(1070, 1080)) + [1749],
+    'blender': list(range(1306, 1310)) + [1749],
+    'borderlands 2': list(range(776, 782)) + [1749],
+    'borderlands 4': list(range(1702, 1711)) + [1749],  # Новая игра
+    'bully': list(range(1639, 1642)) + [1749],
+
+    # C
+    'call of duty modern warfare 2': list(range(1212, 1221)) + [1749],
+    'call of duty ww2': list(range(521, 541)) + [1749],
+    'caves of qud': list(range(655, 657)) + [1749],
+    'chesscraft': list(range(1655, 1657)) + [1749],
+    'chess craft': list(range(1655, 1657)) + [1749],
+    'clair obscur: expedition 33': list(range(1552, 1575)) + [1749],
+    'construction simulator 4': list(range(1373, 1375)) + [1749],
+    'counter strike 1.6': list(range(1453, 1455)) + [1749],
+    'cry of fear': list(range(1481, 1486)) + [1749],
+    'cry of fear 2012': list(range(1481, 1486)) + [1749],
+    'cuphead': list(range(817, 821)) + [1749],
+    'cyberpunk 2077': list(range(658, 704)) + [1749],
+    'cyberpunk 2077 phantom liberty': list(range(1815, 1824)) + [1749],
+
+    # D
+    'dark souls 3': list(range(880, 894)) + [1749],
+    'dead space': list(range(1576, 1580)) + [1749],
+    'dead space remake': list(range(1581, 1599)) + [1749],
+    'detroit': list(range(1407, 1436)) + [1749],
+    'detroit become human': list(range(1407, 1436)) + [1749],
+    'devil may cry 4': list(range(1244, 1258)) + [1749],
+    'diablo 4': list(range(1765, 1774)) + [1749],
+    'dispatch': list(range(1311, 1320)) + [1749],
+    'distant worlds 2': list(range(1644, 1650)) + [1749],
+    'doom the dark ages': list(range(1706, 1749)) + [1749],
+    'doom dark ages': list(range(1706, 1749)) + [1749],
+    'dying light': list(range(751, 775)) + [1749],
+    'dying light: the beast': list(range(1502, 1525)) + [1749],
+
+    # E
+    'ea sports fc 25': list(range(1795, 1804)) + [1749],
+    'elden ring': list(range(552, 587)) + [1749],
+
+    # F
+    'f1 24': list(range(1785, 1794)) + [1749],
+    'fallout 3': list(range(1231, 1236)) + [1749],
+    'fallout 4': list(range(1277, 1296)) + [1749],
+    'far cry': list(range(1658, 1661)) + [1749],
+    'far cry 1': list(range(1658, 1661)) + [1749],
+    'far cry 2': list(range(1662, 1665)) + [1749],
+    'far cry 3': list(range(783, 787)) + [1749],
+    'far cry 4': list(range(1354, 1369)) + [1749],
+    'far cry 5': list(range(242, 254)) + [1749],
+    'far cry 6': list(range(242, 254)) + [1749],
+    'farm frenzy': list(range(1456, 1458)) + [1749],
+    'fifa 17': list(range(916, 931)) + [1749],
+    'final fantasy vii rebirth': list(range(1855, 1864)) + [1749],
+    'finding frankie': list(range(622, 626)) + [1749],
+    'five nights at freddys': list(range(948, 950)) + [1749],
+    'five nights at freddys secret of the mimic': list(range(1462, 1473)) + [1749],
+    'fl studio 25': list(range(1153, 1156)) + [1749],
+    'forza motorsport': list(range(1825, 1834)) + [1749],
+    'friday night funkin': list(range(748, 750)) + [1749],
+    'frostpunk': list(range(1222, 1228)) + [1749],
+    'frostpunk 2': list(range(1619, 1627)) + [1749],
+
+    # G
+    'garrys mod': list(range(858, 860)) + [1749],
+    'ghost of tsushima': list(range(1527, 1551)) + [1749],
+    'ghostrunner': list(range(1692, 1701)) + [1749],
+    'goat simulator': list(range(618, 621)) + [1749],
+    'grand theft auto iii': list(range(1088, 1090)) + [1749],
+    'grand theft auto iv': list(range(799, 810)) + [1749],
+    'grand theft auto v': list(range(705, 742)) + [1749],
+    'grand theft auto san andreas': list(range(1259, 1270)) + [1749],
+    'grand theft auto vice city': list(range(1450, 1452)) + [1749],
+    'grand theft auto liberty city stories': list(range(1082, 1084)) + [1749],
+    'grand theft auto vice city stories': list(range(902, 904)) + [1749],
+    'gta 3': list(range(1088, 1090)) + [1749],
+    'gta iii': list(range(1088, 1090)) + [1749],
+    'gta 4': list(range(799, 810)) + [1749],
+    'gta iv': list(range(799, 810)) + [1749],
+    'gta 5': list(range(705, 742)) + [1749],
+    'gta v': list(range(705, 742)) + [1749],
+    'gta san andreas': list(range(1259, 1270)) + [1749],
+    'gta vice city': list(range(1450, 1452)) + [1749],
+    'gta liberty city stories': list(range(1082, 1084)) + [1749],
+    'gta vice city stories': list(range(902, 904)) + [1749],
+    'гта 5': list(range(705, 742)) + [1749],
+
+    # H
+    'half life 2': list(range(1207, 1211)) + [1749],
+    'hard time 3': list(range(1006, 1009)) + [1749],
+    'hatred': list(range(1667, 1669)) + [1749],
+    'hearts of iron 4': list(range(743, 747)) + [1749],
+    'hearts of iron 4: ultimate bundle': list(range(1497, 1501)) + [1749],
+    'helldivers 2': list(range(1875, 1884)) + [1749],
+    'hitman': list(range(962, 985)) + [1749],
+    'hitman blood money': list(range(951, 960)) + [1749],
+    'hl2': list(range(1207, 1211)) + [1749],
+    'hogwarts legacy': list(range(1720, 1729)) + [1749],
+    'hoi4': list(range(743, 747)) + [1749],
+    'hoi4 ultimate': list(range(1497, 1501)) + [1749],
+    'hollow knight': list(range(1060, 1062)) + [1749],
+    'hollow knight: silksong': list(range(1600, 1602)) + [1749],
+    'hollow knight silksong': list(range(1600, 1602)) + [1749],
+    'homeworld 3': list(range(1895, 1904)) + [1749],
+    'hotline miami': list(range(1085, 1087)) + [1749],
+    'hotline miami 2': [1159, 1160] + [1749],
+    'humanit z': list(range(1096, 1110)) + [1749],
+    'hytale': list(range(1398, 1402)) + [1749],
+
+    # J
+    'jewel match': list(range(234, 236)) + [1749],
+
+    # K
+    'korsary 3': list(range(1370, 1372)) + [1749],
+
+    # L
+    'left 4 dead 2': list(range(1207, 1211)) + [1749],
+    'like a dragon infinite wealth': list(range(1845, 1854)) + [1749],
+    'little nightmares 3': list(range(174, 182)) + [1749],
+    'little nightmares iii': list(range(174, 182)) + [1749],
+    'lonarpg': list(range(1447, 1449)) + [1749],
+
+    # M
+    'mafia 1': list(range(1241, 1243)) + [1749],
+    'mafia 2': list(range(942, 947)) + [1749],
+    'mafia i': list(range(1241, 1243)) + [1749],
+    'metro 2033': list(range(1051, 1056)) + [1749],
+    'metro last light redux': list(range(1606, 1611)) + [1749],
+    'minecraft': list(range(932, 935)) + [1749],
+    'modern warfare 2': list(range(1212, 1221)) + [1749],
+    'mortal kombat 1': list(range(1835, 1844)) + [1749],
+    'my gaming club': list(range(811, 813)) + [1749],
+    'my summer car': list(range(1441, 1443)) + [1749],
+    'my winter car': list(range(1347, 1349)) + [1749],
+    'mysided': list(range(1057, 1059)) + [1749],
+
+    # N
+    'nier automata': list(range(164, 173)) + [1749],
+    'nier replicant': list(range(1670, 1682)) + [1749],
+    'nier: automata': list(range(164, 173)) + [1749],
+    'no im not a human': list(range(517, 520)) + [1749],
+
+    # O
+    'one shot': list(range(1065, 1069)) + [1749],
+    'orion sandbox': list(range(814, 816)) + [1749],
+
+    # P
+    'palworld': list(range(202, 216)) + [1749],
+    'payday the heist': list(range(876, 879)) + [1749],
+    'people playground': list(range(1603, 1605)) + [1749],
+    'persona 3 reload': list(range(1700, 1705)) + [1749],  # Новая игра
+    'plants vs zombies': list(range(549, 551)) + [1749],
+    'portal 2': list(range(1207, 1211)) + [1749],
+    'portal knights': list(range(1237, 1239)) + [1749],
+    'postal 2': list(range(1615, 1617)) + [1749],
+    'prince of persia the lost crown': list(range(1865, 1874)) + [1749],
+    'project zomboid': list(range(1093, 1095)) + [1749],
+    'prototype 1': list(range(895, 901)) + [1749],
+    'prototype 2': list(range(1044, 1050)) + [1749],
+
+    # Q
+    'quasimorph': list(range(589, 591)) + [1749],
+
+    # R
+    'rdr 1': list(range(542, 548)) + [1749],
+    'rdr 2': list(range(428, 485)) + [1749],
+    'rdr2': list(range(428, 485)) + [1749],
+    'red dead redemption': list(range(542, 548)) + [1749],
+    'red dead redemption 2': list(range(428, 485)) + [1749],
+    'resident evil 8': list(range(826, 845)) + [1749],
+    'resident evil revelations 2': list(range(788, 798)) + [1749],
+    'resident evil resistance': list(range(1330, 1346)) + [1749],
+    'resident evil village': list(range(826, 845)) + [1749],
+    'rimworld': list(range(1298, 1301)) + [1749],
+    'risk of rain 2': list(range(1612, 1614)) + [1749],
+    'rock star life simulator': list(range(184, 186)) + [1749],
+
+    # S
+    's.t.a.l.k.e.r. shadow of chernobyl': list(range(1326, 1329)) + [1749],
+    'sally face': list(range(628, 632)) + [1749],
+    'scorn': list(range(217, 227)) + [1749],
+    'shadow of chernobyl': list(range(1326, 1329)) + [1749],
+    'silent hill 2 remake': list(range(1690, 1695)) + [1749],  # Новая игра
+    'skull and bones': list(range(1885, 1894)) + [1749],
+    'slim rancher': list(range(853, 857)) + [1749],
+    'slime rancher 2': list(range(1323, 1325)) + [1749],
+    'spider man remastered': list(range(486, 516)) + [1749],
+    'spider man': list(range(486, 516)) + [1749],
+    'stalker 2': list(range(1628, 1634)) + [1749],
+    'stalker anomaly': list(range(1628, 1634)) + [1749],
+    'stalker shadow of chernobyl': list(range(1326, 1329)) + [1749],
+    'star wars jedi survivor': list(range(1710, 1719)) + [1749],
+    'star wars outlaws': list(range(1905, 1914)) + [1749],
+    'stray': list(range(936, 941)) + [1749],
+    'street fighter 6': list(range(1775, 1784)) + [1749],
+    'streets of rogue 2': list(range(1041, 1043)) + [1749],
+    'system shock 2 remaster': list(range(187, 192)) + [1749],
+
+    # T
+    'teardown': list(range(906, 912)) + [1749],
+    'team fortress 2': list(range(1453, 1455)) + [1749],
+    'terraria': list(range(1459, 1461)) + [1749],
+    'terraria 1.4.4.9': list(range(1350, 1352)) + [1749],
+    'the forest': list(range(633, 635)) + [1749],
+    'the last of us': list(range(1119, 1152)) + [1749],
+    'the legend of zelda tears of the kingdom': list(range(1755, 1764)) + [1749],
+    'the long drive': list(range(1444, 1446)) + [1749],
+    'the spike': list(range(846, 852)) + [1749],
+    'the witcher 3': list(range(986, 1005)) + [1749],
+    'third crisis': list(range(1302, 1305)) + [1749],
+    'tomb raider 2013': list(range(1487, 1496)) + [1749],
+    'tomb raider': list(range(1487, 1496)) + [1749],
+
+    # U
+    'uber soldier': list(range(197, 201)) + [1749],
+    'undertale': list(range(1376, 1378)) + [1749],
+
+    # W
+    'warhammer 40000 gladius relics of war': list(range(1702, 1705)) + [1749],
+    'warhammer gladius': list(range(1702, 1705)) + [1749],
+    'watch dogs 2': list(range(1010, 1027)) + [1749],
+    'watch dogs': list(range(1010, 1027)) + [1749],
+    'witcher 3': list(range(986, 1005)) + [1749],
+    'witcher': list(range(986, 1005)) + [1749],
+    'world box': list(range(1036, 1040)) + [1749],
+    'worldbox': list(range(1036, 1040)) + [1749],
+
+    # КИРИЛЛИЦА
+    'андертейл': list(range(1376, 1378)) + [1749],
+    'аномали': list(range(1628, 1634)) + [1749],
+    'ассасин крид': list(range(1028, 1033)) + [1749],
+    'бехолдер': list(range(823, 825)) + [1749],
+    'биошок': list(range(1070, 1080)) + [1749],
+    'блендер': list(range(1306, 1310)) + [1749],
+    'бордерлендс 2': list(range(776, 782)) + [1749],
+    'булли': list(range(1639, 1642)) + [1749],
+    'ведьмак 3': list(range(986, 1005)) + [1749],
+    'ведьмак': list(range(986, 1005)) + [1749],
+    'гострайнер': list(range(1692, 1701)) + [1749],
+    'гта 5': list(range(705, 742)) + [1749],
+    'детройт': list(range(1407, 1436)) + [1749],
+    'дед спейс': list(range(1576, 1580)) + [1749],
+    'дмс 4': list(range(1244, 1258)) + [1749],
+    'дум темные века': list(range(1706, 1749)) + [1749],
+    'зомбоид': list(range(1093, 1095)) + [1749],
+    'капхед': list(range(817, 821)) + [1749],
+    'киберпанк 2077': list(range(658, 704)) + [1749],
+    'киберпанк': list(range(658, 704)) + [1749],
+    'кот': list(range(936, 941)) + [1749],
+    'корсары 3': list(range(1370, 1372)) + [1749],
+    'лара крофт': list(range(1487, 1496)) + [1749],
+    'майнкрафт': list(range(932, 935)) + [1749],
+    'мафия 1': list(range(1241, 1243)) + [1749],
+    'мафия 2': list(range(942, 947)) + [1749],
+    'метро 2033': list(range(1051, 1056)) + [1749],
+    'метро last light': list(range(1606, 1611)) + [1749],
+    'мой летний авто': list(range(1441, 1443)) + [1749],
+    'мой зимний авто': list(range(1347, 1349)) + [1749],
+    'ниер репликант': list(range(1670, 1682)) + [1749],
+    'ниер': list(range(164, 173)) + [1749],
+    'палворлд': list(range(202, 216)) + [1749],
+    'пейдэй': list(range(876, 879)) + [1749],
+    'призрак цусимы': list(range(1527, 1551)) + [1749],
+    'прототип 2': list(range(1044, 1050)) + [1749],
+    'прототип': list(range(895, 901)) + [1749],
+    'растения против зомби': list(range(549, 551)) + [1749],
+    'римворлд': list(range(1298, 1301)) + [1749],
+    'симулятор козла': list(range(618, 621)) + [1749],
+    'сталкер 2': list(range(1628, 1634)) + [1749],
+    'сталкер аномали': list(range(1628, 1634)) + [1749],
+    'сталкер': list(range(1326, 1329)) + [1749],
+    'строительный симулятор 4': list(range(1373, 1375)) + [1749],
+    'тень чернобыля': list(range(1326, 1329)) + [1749],
+    'террария': list(range(1459, 1461)) + [1749],
+    'фнаф': list(range(948, 950)) + [1749],
+    'фоллаут 3': list(range(1231, 1236)) + [1749],
+    'фоллаут 4': list(range(1277, 1296)) + [1749],
+    'ферма': list(range(1456, 1458)) + [1749],
+    'фифа 17': list(range(916, 931)) + [1749],
+    'хаф лайф 2': list(range(1207, 1211)) + [1749],
+    'хитман': list(range(962, 985)) + [1749],
+    'холлоу найт': list(range(1060, 1062)) + [1749],
+    'хотлайн майами 2': [1159, 1160] + [1749],
+    'хотлайн майами': list(range(1085, 1087)) + [1749],
+    'человек паук': list(range(486, 516)) + [1749],
+    'элден ринг': list(range(552, 587)) + [1749],
 
-    # Call of Duty
-    'call of duty modern warfare 2': list(range(1212, 1222)),
-    'cod modern warfare 2': list(range(1212, 1222)),
-    'modern warfare 2': list(range(1212, 1222)),
-    'cod mw2': list(range(1212, 1222)),
-
-    'call of duty ww2': list(range(521, 542)),
-    'cod ww2': list(range(521, 542)),
-    'world war 2': list(range(521, 542)),
-
-    # Far Cry
-    'far cry': list(range(1658, 1662)),
-    'farcry': list(range(1658, 1662)),
-    'far cry 1': list(range(1658, 1662)),
-
-    'far cry 2': list(range(1662, 1666)),
-    'farcry 2': list(range(1662, 1666)),
-
-    'far cry 3': list(range(783, 788)),
-    'farcry 3': list(range(783, 788)),
-
-    'far cry 4': list(range(1354, 1370)),
-    'farcry 4': list(range(1354, 1370)),
-
-    'far cry 5': list(range(242, 255)),
-    'farcry 5': list(range(242, 255)),
-
-    # The Witcher
-    'witcher 3': list(range(986, 1006)),
-    'witcher': list(range(986, 1006)),
-    'ведьмак 3': list(range(986, 1006)),
-    'ведьмак': list(range(986, 1006)),
-    'the witcher 3': list(range(986, 1006)),
-
-    # Cyberpunk
-    'cyberpunk 2077': list(range(658, 705)),
-    'cyberpunk': list(range(658, 705)),
-    'киберпанк': list(range(658, 705)),
-    'киберпанк 2077': list(range(658, 705)),
-
-    # Red Dead Redemption
-    'red dead redemption': list(range(542, 549)),
-    'rdr': list(range(542, 549)),
-    'rdr 1': list(range(542, 549)),
-
-    'red dead redemption 2': list(range(428, 486)),
-    'rdr 2': list(range(428, 486)),
-    'rdr2': list(range(428, 486)),
-
-    # Resident Evil
-    'resident evil revelations 2': list(range(788, 799)),
-    're revelations 2': list(range(788, 799)),
-
-    'resident evil resistance': list(range(1330, 1347)),
-    're resistance': list(range(1330, 1347)),
-
-    'resident evil village': list(range(826, 846)),
-    're village': list(range(826, 846)),
-    'resident evil 8': list(range(826, 846)),
-
-    # Другие популярные игры
-    'minecraft': list(range(932, 936)),
-    'майнкрафт': list(range(932, 936)),
-
-    'elden ring': list(range(552, 588)),
-    'элден ринг': list(range(552, 588)),
-
-    'dark souls 3': list(range(880, 895)),
-    'демон соулс': list(range(880, 895)),
-
-    'stalker': list(range(1326, 1330)),
-    'сталкер': list(range(1326, 1330)),
-    's.t.a.l.k.e.r.': list(range(1326, 1330)),
-    'shadow of chernobyl': list(range(1326, 1330)),
-    'тень чернобыля': list(range(1326, 1330)),
-
-    'stalker anomaly': list(range(1628, 1635)),
-    'сталкер аномали': list(range(1628, 1635)),
-    'аномали': list(range(1628, 1635)),
-
-    'half life 2': list(range(1207, 1212)),
-    'hl2': list(range(1207, 1212)),
-    'хаф лайф 2': list(range(1207, 1212)),
-
-    'portal 2': list(range(1207, 1212)),  # Если есть в канале
-
-    'left 4 dead 2': list(range(1207, 1212)),  # Если есть
-
-    'counter strike 1.6': list(range(1453, 1456)),
-    'cs 1.6': list(range(1453, 1456)),
-    'кс 1.6': list(range(1453, 1456)),
-
-    'cs go': list(range(1453, 1456)),  # Если есть
-
-    'dota 2': list(range(1453, 1456)),  # Если есть
-
-    'team fortress 2': list(range(1453, 1456)),  # Если есть
-
-    # Остальные игры из твоей базы
-    'antonblast': list(range(913, 916)),
-    'assassins creed': list(range(1028, 1034)),
-    'ассасин крид': list(range(1028, 1034)),
-
-    'beamng drive': list(range(861, 874)),
-    'beamng': list(range(861, 874)),
-
-    'beholder': list(range(823, 826)),
-    'бехолдер': list(range(823, 826)),
-
-    'bendy and the ink machine': list(range(652, 655)),
-    'bendy': list(range(652, 655)),
-    'бенди': list(range(652, 655)),
-
-    'bioshock remaster': list(range(1070, 1081)),
-    'bioshock': list(range(1070, 1081)),
-    'биошок': list(range(1070, 1081)),
-
-    'blender': list(range(1306, 1311)),
-    'блендер': list(range(1306, 1311)),
-
-    'borderlands 2': list(range(776, 783)),
-    'бордерлендс 2': list(range(776, 783)),
-
-    'bully': list(range(1639, 1643)),
-    'булли': list(range(1639, 1643)),
-    'canis canem edit': list(range(1639, 1643)),
-
-    'caves of qud': list(range(655, 658)),
-
-    'clair obscur: expedition 33': list(range(1552, 1576)),
-    'clair obscur': list(range(1552, 1576)),
-
-    'construction simulator 4': list(range(1373, 1376)),
-    'строительный симулятор 4': list(range(1373, 1376)),
-
-    'cry of fear': list(range(1481, 1487)),
-    'cry of fear 2012': list(range(1481, 1487)),
-
-    'cuphead': list(range(817, 822)),
-    'капхед': list(range(817, 822)),
-
-    'dead space': list(range(1576, 1581)),
-    'dead space remake': list(range(1581, 1600)),
-    'дед спейс': list(range(1576, 1581)),
-
-    'detroit become human': list(range(1407, 1437)),
-    'detroit': list(range(1407, 1437)),
-    'детройт': list(range(1407, 1437)),
-
-    'devil may cry 4': list(range(1244, 1259)),
-    'dmc 4': list(range(1244, 1259)),
-    'дмс 4': list(range(1244, 1259)),
-
-    'dispatch': list(range(1311, 1321)),
-
-    'distant worlds 2': list(range(1644, 1651)),
-
-    'dying light': list(range(751, 776)),
-    'dying light: the beast': list(range(1502, 1526)),
-
-    'fallout 3': list(range(1231, 1237)),
-    'фоллаут 3': list(range(1231, 1237)),
-
-    'fallout 4': list(range(1277, 1297)),
-    'фоллаут 4': list(range(1277, 1297)),
-
-    'farm frenzy': list(range(1456, 1459)),
-    'ферма': list(range(1456, 1459)),
-
-    'fifa 17': list(range(916, 932)),
-    'фифа 17': list(range(916, 932)),
-
-    'finding frankie': list(range(622, 627)),
-
-    'five nights at freddys': list(range(948, 951)),
-    'fnaf': list(range(948, 951)),
-    'фнаф': list(range(948, 951)),
-
-    'five nights at freddys secret of the mimic': list(range(1462, 1474)),
-    'fnaf secret of the mimic': list(range(1462, 1474)),
-
-    'fl studio 25': list(range(1153, 1157)),
-    'fl studio': list(range(1153, 1157)),
-
-    'friday night funkin': list(range(748, 751)),
-    'fnf': list(range(748, 751)),
-
-    'frostpunk': list(range(1222, 1229)),
-    'frostpunk 2': list(range(1619, 1628)),
-
-    'garrys mod': list(range(858, 861)),
-    'gmod': list(range(858, 861)),
-
-    'ghost of tsushima': list(range(1527, 1552)),
-    'призрак цусимы': list(range(1527, 1552)),
-
-    'ghostrunner': list(range(1692, 1702)),
-    'гострайнер': list(range(1692, 1702)),
-
-    'goat simulator': list(range(618, 622)),
-    'симулятор козла': list(range(618, 622)),
-
-    'hard time 3': list(range(1006, 1010)),
-
-    'hatred': list(range(1667, 1670)),
-
-    'hearts of iron 4': list(range(743, 748)),
-    'hoi4': list(range(743, 748)),
-
-    'hearts of iron 4: ultimate bundle': list(range(1497, 1502)),
-    'hoi4 ultimate': list(range(1497, 1502)),
-
-    'hitman': list(range(962, 986)),
-    'хитман': list(range(962, 986)),
-
-    'hitman blood money': list(range(951, 961)),
-
-    'hollow knight': list(range(1060, 1063)),
-    'холлоу найт': list(range(1060, 1063)),
-
-    'hollow knight: silksong': list(range(1600, 1603)),
-    'hollow knight silksong': list(range(1600, 1603)),
-
-    'hotline miami': list(range(1085, 1088)),
-    'хотлайн майами': list(range(1085, 1088)),
-
-    'hotline miami 2': [1159, 1160],
-    'хотлайн майами 2': [1159, 1160],
-
-    'humanit z': list(range(1096, 1111)),
-
-    'hytale': list(range(1398, 1403)),
-
-    'jewel match': list(range(234, 237)),
-
-    'korsary 3': list(range(1370, 1373)),
-    'корсары 3': list(range(1370, 1373)),
-
-    'little nightmares 3': list(range(174, 183)),
-    'little nightmares iii': list(range(174, 183)),
-
-    'lonarpg': list(range(1447, 1450)),
-
-    'mafia 1': list(range(1241, 1244)),
-    'mafia i': list(range(1241, 1244)),
-    'мафия 1': list(range(1241, 1244)),
-
-    'mafia 2': list(range(942, 948)),
-    'мафия 2': list(range(942, 948)),
-
-    'metro 2033': list(range(1051, 1057)),
-    'метро 2033': list(range(1051, 1057)),
-
-    'metro last light redux': list(range(1606, 1612)),
-    'метро last light': list(range(1606, 1612)),
-
-    'my gaming club': list(range(811, 814)),
-
-    'my summer car': list(range(1441, 1444)),
-    'мой летний авто': list(range(1441, 1444)),
-
-    'my winter car': list(range(1347, 1350)),
-    'мой зимний авто': list(range(1347, 1350)),
-
-    'mysided': list(range(1057, 1060)),
-
-    'nier automata': list(range(164, 174)),
-    'nier: automata': list(range(164, 174)),
-    'ниер': list(range(164, 174)),
-
-    'nier replicant': list(range(1670, 1683)),
-    'ниер репликант': list(range(1670, 1683)),
-
-    'no im not a human': list(range(517, 521)),
-
-    'one shot': list(range(1065, 1070)),
-
-    'orion sandbox': list(range(814, 817)),
-
-    'palworld': list(range(202, 217)),
-    'палворлд': list(range(202, 217)),
-
-    'payday the heist': list(range(876, 880)),
-    'пейдэй': list(range(876, 880)),
-
-    'people playground': list(range(1603, 1606)),
-
-    'plants vs zombies': list(range(549, 552)),
-    'растения против зомби': list(range(549, 552)),
-
-    'portal knights': list(range(1237, 1240)),
-
-    'postal 2': list(range(1615, 1618)),
-
-    'project zomboid': list(range(1093, 1096)),
-    'зомбоид': list(range(1093, 1096)),
-
-    'prototype 1': list(range(895, 902)),
-    'prototype': list(range(895, 902)),
-    'прототип': list(range(895, 902)),
-
-    'prototype 2': list(range(1044, 1051)),
-    'прототип 2': list(range(1044, 1051)),
-
-    'quasimorph': list(range(589, 592)),
-
-    'rimworld': list(range(1298, 1302)),
-    'римворлд': list(range(1298, 1302)),
-
-    'risk of rain 2': list(range(1612, 1615)),
-
-    'rock star life simulator': list(range(184, 187)),
-
-    'sally face': list(range(628, 633)),
-
-    'scorn': list(range(217, 228)),
-
-    'slim rancher': list(range(853, 858)),
-
-    'slime rancher 2': list(range(1323, 1326)),
-
-    'spider man remastered': list(range(486, 517)),
-    'spider man': list(range(486, 517)),
-    'человек паук': list(range(486, 517)),
-
-    'stray': list(range(936, 942)),
-    'кот': list(range(936, 942)),
-
-    'streets of rogue 2': list(range(1041, 1044)),
-
-    'system shock 2 remaster': list(range(187, 193)),
-
-    'teardown': list(range(906, 913)),
-
-    'terraria': list(range(1459, 1462)),
-    'террария': list(range(1459, 1462)),
-
-    'terraria 1.4.4.9': list(range(1350, 1353)),
-
-    'the forest': list(range(633, 636)),
-    'forest': list(range(633, 636)),
-
-    'the last of us': list(range(1119, 1153)),
-    'last of us': list(range(1119, 1153)),
-
-    'the long drive': list(range(1444, 1447)),
-
-    'the spike': list(range(846, 853)),
-
-    'third crisis': list(range(1302, 1306)),
-
-    'tomb raider 2013': list(range(1487, 1497)),
-    'tomb raider': list(range(1487, 1497)),
-    'лара крофт': list(range(1487, 1497)),
-
-    'uber soldier': list(range(197, 202)),
-
-    'undertale': list(range(1376, 1379)),
-    'андертейл': list(range(1376, 1379)),
-
-    'warhammer 40000 gladius relics of war': list(range(1702, 1706)),
-    'warhammer gladius': list(range(1702, 1706)),
-
-    'watch dogs 2': list(range(1010, 1028)),
-    'watch dogs': list(range(1010, 1028)),
-
-    'world box': list(range(1036, 1041)),
-    'worldbox': list(range(1036, 1041)),
-
-    'bad cheese': list(range(1651, 1655)),
-    'badcheese': list(range(1651, 1655)),
-
-    'chesscraft': list(range(1655, 1658)),
-    'chess craft': list(range(1655, 1658)),
 }
+
+
+print(f"✅ Загружено игр: {len(GAMES_DATABASE)}")
+
+
+# ========== ЗАГРУЗКА ДАННЫХ ==========
+def load_data():
+    """Загружает все данные из файлов"""
+    global orders, user_stats, admins, game_stats
+
+    # Заказы
+    if os.path.exists(ORDERS_FILE):
+        with open(ORDERS_FILE, 'r', encoding='utf-8') as f:
+            orders.extend(json.load(f))
+
+    # Статистика пользователей
+    if os.path.exists(USER_STATS_FILE):
+        with open(USER_STATS_FILE, 'r', encoding='utf-8') as f:
+            user_stats.update(json.load(f))
+
+    # Админы
+    if os.path.exists(ADMINS_FILE):
+        with open(ADMINS_FILE, 'r', encoding='utf-8') as f:
+            admins.clear()
+            admins.extend(json.load(f))
+
+
+def save_data():
+    """Сохраняет все данные в файлы"""
+    with open(ORDERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(orders, f, ensure_ascii=False, indent=2)
+
+    with open(USER_STATS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(user_stats, f, ensure_ascii=False, indent=2)
+
+    with open(ADMINS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(admins, f, ensure_ascii=False, indent=2)
+
+
+# ========== ФУНКЦИЯ ОТПРАВКИ ИГР ==========
+def send_game_files(chat_id, game_name, user_id=None):
+    """Отправляет файлы игры и прикрепляет баннер к последнему"""
+    if game_name not in GAMES_DATABASE:
+        return False
+
+    file_ids = GAMES_DATABASE[game_name]
+    total_files = len(file_ids)
+    sent_count = 0
+
+    bot.send_message(chat_id, f"🎮 *{game_name.upper()}*\n📥 Отправляю...", parse_mode='Markdown')
+
+    for i, file_id in enumerate(file_ids):
+        try:
+            if i == total_files - 1:
+                bot.copy_message(
+                    chat_id=chat_id,
+                    from_chat_id=GAMES_CHANNEL_ID,
+                    message_id=file_id,
+                    caption=GAME_BANNER.strip(),
+                    parse_mode='Markdown'
+                )
+            else:
+                bot.copy_message(
+                    chat_id=chat_id,
+                    from_chat_id=GAMES_CHANNEL_ID,
+                    message_id=file_id
+                )
+            sent_count += 1
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"Ошибка отправки {file_id}: {e}")
+
+    if user_id:
+        uid = str(user_id)
+        if uid not in user_stats:
+            user_stats[uid] = {'downloads': 0, 'created_orders': 0}
+        user_stats[uid]['downloads'] = user_stats[uid].get('downloads', 0) + 1
+        save_data()
+
+    bot.send_message(chat_id, f"✅ *Готово!* Отправлено {sent_count} файлов")
+    return True
 
 
 # ========== КОМАНДА START ==========
@@ -570,29 +437,21 @@ def start_cmd(message):
         user_stats[user_id] = {
             'downloads': 0,
             'created_orders': 0,
-            'first_seen': datetime.now().isoformat(),
-            'username': message.from_user.username,
-            'first_name': message.from_user.first_name,
-            'rank': None
+            'first_seen': datetime.now().isoformat()
         }
-        save_all()
+        save_data()
 
-    text = """🔍 *Напиши название игры* — я пришлю, если есть.
+    text = """🎮 *Ferwes Games Bot*
+
+🔍 *Напиши название игры* — я пришлю, если есть.
 
 📋 `/orders` — стол заказов  
 📝 `/neworder` — новый заказ  
 👤 `/myorders` — мои заказы  
 📊 `/stats` — моя статистика  
 🔥 `/top` — топ игр  
-💎 `/premium` — премиум  
-ℹ️ `/help` — помощь  
-📚 `/info` — о боте  
-🎲 `/randgame` — случайная игра  
-🏆 `/toporders` — топ заказов  
-✏️ `/editorder ID` — редактировать свой заказ"""
-
-    if is_admin(message.from_user.id):
-        text += "\n\n👑 `/moderator` — панель модератора"
+👑 `/moderator` — админ-панель  
+ℹ️ `/help` — помощь"""
 
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
@@ -601,203 +460,10 @@ def start_cmd(message):
         types.InlineKeyboardButton("👤 Мои заказы", callback_data="my_orders"),
         types.InlineKeyboardButton("📊 Статистика", callback_data="my_stats"),
         types.InlineKeyboardButton("🔥 Топ игр", callback_data="show_top"),
-        types.InlineKeyboardButton("💎 Премиум", callback_data="show_premium"),
-        types.InlineKeyboardButton("ℹ️ Помощь", callback_data="show_help")
+        types.InlineKeyboardButton("👑 Админка", callback_data="show_mod")
     )
 
     bot.send_message(message.chat.id, text, parse_mode='Markdown', reply_markup=markup)
-
-
-# ========== КОМАНДА MODERATOR ==========
-@bot.message_handler(commands=['moderator'])
-def moderator_cmd(message):
-    if not is_admin(message.from_user.id):
-        bot.reply_to(message, "❌ Нет прав")
-        return
-
-    if message.chat.type != 'private':
-        return
-
-    text = "👑 *Панель модератора*\n\n"
-    text += "📊 `/stats` — статистика бота\n"
-    text += "❌ `/delorder ID` — удалить заказ\n"
-    text += "👑 `/addadmin ID` — добавить админа\n"
-    text += "🔨 `/ban ID причина [тихий]` — заблокировать\n"
-    text += "🔇 `/mute ID причина [часы]` — запретить заказы\n"
-    text += "📢 `/broadcast текст` — рассылка\n"
-
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')
-
-
-# ========== КОМАНДА ADDADMIN ==========
-@bot.message_handler(commands=['addadmin'])
-def addadmin_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        user_id = str(message.text.split()[1])
-        if user_id in admins:
-            bot.reply_to(message, "⚠️ Уже админ")
-        else:
-            admins.append(user_id)
-            save_all()
-            bot.reply_to(message, f"✅ ID {user_id} теперь админ")
-    except:
-        bot.reply_to(message, "❌ Использование: /addadmin ID")
-
-
-# ========== КОМАНДА BAN ==========
-@bot.message_handler(commands=['ban'])
-def ban_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        parts = message.text.split(maxsplit=3)
-        if len(parts) < 3:
-            bot.reply_to(message, "❌ /ban ID причина [тихий]")
-            return
-
-        user_id = parts[1]
-        reason = parts[2]
-        ban_type = 'normal'
-
-        if len(parts) > 3 and parts[3].lower() == 'тихий':
-            ban_type = 'silent'
-
-        banned_users[user_id] = {
-            'type': ban_type,
-            'reason': reason,
-            'banned_by': str(message.from_user.id),
-            'banned_at': datetime.now().isoformat()
-        }
-
-        save_all()
-        type_text = "тихий" if ban_type == 'silent' else "обычный"
-        bot.reply_to(message, f"✅ Пользователь {user_id} забанен ({type_text})\nПричина: {reason}")
-    except:
-        bot.reply_to(message, "❌ Ошибка")
-
-
-# ========== КОМАНДА MUTE ==========
-@bot.message_handler(commands=['mute'])
-def mute_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        parts = message.text.split(maxsplit=3)
-        if len(parts) < 3:
-            bot.reply_to(message, "❌ /mute ID причина [часы]")
-            return
-
-        user_id = parts[1]
-        reason = parts[2]
-        until = None
-
-        if len(parts) > 3:
-            try:
-                hours = int(parts[3])
-                until = datetime.now() + timedelta(hours=hours)
-            except:
-                pass
-
-        muted_users[user_id] = {
-            'reason': reason,
-            'until': until.isoformat() if until else None,
-            'muted_by': str(message.from_user.id),
-            'muted_at': datetime.now().isoformat()
-        }
-
-        save_all()
-
-        if until:
-            until_str = until.strftime("%d.%m.%Y %H:%M")
-            bot.reply_to(message, f"✅ Пользователь {user_id} замучен до {until_str}\nПричина: {reason}")
-        else:
-            bot.reply_to(message, f"✅ Пользователь {user_id} замучен навсегда\nПричина: {reason}")
-    except:
-        bot.reply_to(message, "❌ Ошибка")
-
-
-# ========== КОМАНДА UNBAN ==========
-@bot.message_handler(commands=['unban'])
-def unban_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        user_id = message.text.split()[1]
-        if user_id in banned_users:
-            del banned_users[user_id]
-            save_all()
-            bot.reply_to(message, f"✅ Пользователь {user_id} разбанен")
-        else:
-            bot.reply_to(message, f"❌ Пользователь {user_id} не в бане")
-    except:
-        bot.reply_to(message, "❌ Использование: /unban ID")
-
-
-# ========== КОМАНДА UNMUTE ==========
-@bot.message_handler(commands=['unmute'])
-def unmute_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        user_id = message.text.split()[1]
-        if user_id in muted_users:
-            del muted_users[user_id]
-            save_all()
-            bot.reply_to(message, f"✅ Мут снят с {user_id}")
-        else:
-            bot.reply_to(message, f"❌ Пользователь {user_id} не в муте")
-    except:
-        bot.reply_to(message, "❌ Использование: /unmute ID")
-
-
-# ========== КОМАНДА DELORDER ==========
-@bot.message_handler(commands=['delorder'])
-def delorder_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        order_id = int(message.text.split()[1])
-        for i, order in enumerate(orders):
-            if order['id'] == order_id:
-                del orders[i]
-                save_all()
-                bot.reply_to(message, f"✅ Заказ #{order_id} удален")
-                return
-        bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
-    except:
-        bot.reply_to(message, "❌ Использование: /delorder ID")
-
-
-# ========== КОМАНДА BROADCAST ==========
-@bot.message_handler(commands=['broadcast'])
-def broadcast_cmd(message):
-    if not is_admin(message.from_user.id):
-        return
-
-    try:
-        text = message.text.split(' ', 1)[1]
-        sent = 0
-        failed = 0
-
-        for user_id_str in user_stats.keys():
-            try:
-                bot.send_message(int(user_id_str), f"📢 *Объявление*\n\n{text}", parse_mode='Markdown')
-                sent += 1
-                time.sleep(0.05)
-            except:
-                failed += 1
-
-        bot.reply_to(message, f"✅ Рассылка завершена\n📤 Отправлено: {sent}\n❌ Не отправлено: {failed}")
-    except:
-        bot.reply_to(message, "❌ Использование: /broadcast текст")
 
 
 # ========== КОМАНДА HELP ==========
@@ -806,374 +472,121 @@ def help_cmd(message):
     if message.chat.type != 'private':
         return
 
-    text = """ℹ️ *Справка команд*
+    text = """ℹ️ *Справка по командам*
 
-📋 *Основные команды:*
-• `/start` — главное меню 
-• `/help` — эта справка
-• `/info` — информация о боте
-
-📦 *Заказы:*
-• `/orders` — стол заказов
-• `/neworder` — новый заказ
-• `/myorders` — мои заказы
-• `/editorder ID` — редактировать свой заказ
+📋 *Заказы:*
+/orders — стол заказов
+/neworder — создать заказ
+/myorders — мои заказы
 
 🎮 *Игры:*
-• Напиши название игры — поиск
-• `/top` — топ игр по скачиваниям
-• `/randgame` — случайная игра
-• `/stats` — моя статистика
+/stats — моя статистика
+/top — топ игр
 
-🏆 *Рейтинги:*
-• `/toporders` — топ заказов по лайкам
+👑 *Админ-команды:*
+/moderator — панель модератора
+/delorder [ID] — удалить заказ
+/broadcast [текст] — рассылка
+/addadmin [ID] — добавить админа"""
 
-💎 *Премиум:*
-• `/premium` — информация о премиум
-
-👑 *Для админов:*
-• `/moderator` — панель модератора
-
-❓ *ТехПоддержка:*
-• @sweacher
-"""
     bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
-# ========== КОМАНДА INFO ==========
-@bot.message_handler(commands=['info'])
-def info_cmd(message):
-    if message.chat.type != 'private':
+# ========== КОМАНДА MODERATOR ==========
+@bot.message_handler(commands=['moderator'])
+def moderator_cmd(message):
+    if str(message.from_user.id) not in admins or message.chat.type != 'private':
         return
 
-    total_users = len(user_stats)
+    # Статистика
     total_orders = len(orders)
-    total_games = len(GAMES_DATABASE)
-    total_downloads = sum(stats.get('downloads', 0) for stats in user_stats.values())
-    total_likes = sum(order.get('likes', 0) for order in orders)
+    active_orders = sum(1 for o in orders if o.get('status', 'active') == 'active')
 
-    today = datetime.now().strftime("%Y-%m-%d")
-    active_today = 0
-    for user_id, stats in user_stats.items():
-        last_seen = stats.get('last_seen')
-        if last_seen and last_seen.startswith(today):
-            active_today += 1
+    text = f"""👑 *ПАНЕЛЬ МОДЕРАТОРА*
 
-    text = f"""📚 *Информация о боте Ferwes*
+📊 *СТАТИСТИКА*
+• Всего заказов: {total_orders}
+• Активных: {active_orders}
+• Пользователей: {len(user_stats)}
+• Админов: {len(admins)}
 
-🤖 *Версия:* 1.8.3.8
-📊 *Статистика:*
-• 👥 Пользователей: {total_users}
-• 📋 Заказов: {total_orders}
-• 🎮 Игр в базе: {total_games}
-• 📥 Всего скачиваний: {total_downloads}
-• 📅 Активных сегодня: {active_today}
+━━━━━━━━━━━━━━━━━━
+⚡ *КОМАНДЫ*
 
-👑 *Администрация:*
-• Владелец: @ferwesgames
-• Контакт: {PREMIUM_CONTACT}
-
+/delorder [ID] — удалить заказ
+/broadcast [текст] — рассылка
+/addadmin [ID] — добавить админа
 """
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
-
-# ========== КОМАНДА PREMIUM ==========
-@bot.message_handler(commands=['premium'])
-def premium_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    user_id = str(message.from_user.id)
-
-    if user_id in premium_users:
-        prefix_info = premium_users[user_id]
-        text = f"""💎 *У вас уже есть премиум!*
-
-Ваш префикс: `[{prefix_info.get('prefix', '')}]`
-Куплен: {prefix_info.get('purchased_date', 'неизвестно')}
-
-📌 Префикс работает, пока вы в чате:  
-{PREMIUM_CHAT_LINK}
-
-📩 По вопросам: {PREMIUM_CONTACT}"""
-    else:
-        text = f"""💎 *Премиум — префикс в чате*
-
-🔥 Префикс сохраняется навсегда!
-
-**Что даёт премиум:**
-• Уникальный префикс в чате
-• Выделение среди других пользователей
-
-💳 *Реквизиты для оплаты:*  
-ЮMoney: `4100119022808101`  
-Стоимость: **150 рублей**
-
-После оплаты пришлите скриншот {PREMIUM_CONTACT}
-
-📌 *Обязательно:* вступите в чат:  
-{PREMIUM_CHAT_LINK}
-
-⚠️ Не выходите из чата, чтобы префикс не сбился."""
-
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("📢 Вступить в чат", url=PREMIUM_CHAT_LINK))
-    markup.add(types.InlineKeyboardButton("✍️ Написать @sweacher", url="https://t.me/sweacher"))
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        types.InlineKeyboardButton("📋 Заказы", callback_data="show_orders"),
+        types.InlineKeyboardButton("📊 Статистика", callback_data="mod_stats"),
+        types.InlineKeyboardButton("🔄 Обновить", callback_data="refresh_mod")
+    )
 
     bot.send_message(message.chat.id, text, parse_mode='Markdown', reply_markup=markup)
 
 
-# ========== КОМАНДА RANDGAME ==========
-@bot.message_handler(commands=['randgame'])
-def randgame_cmd(message):
-    if message.chat.type != 'private':
+# ========== КОМАНДА DELORDER ==========
+@bot.message_handler(commands=['delorder'])
+def delorder_cmd(message):
+    if str(message.from_user.id) not in admins:
         return
-
-    game_name = random.choice(list(GAMES_DATABASE.keys()))
-    send_game_files(message.chat.id, game_name, message.from_user.id)
-
-
-# ========== КОМАНДА STATS ==========
-@bot.message_handler(commands=['stats'])
-def stats_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    user_id_str = str(message.from_user.id)
-
-    if user_id_str not in user_stats:
-        bot.reply_to(message, "📊 *Вы еще ничего не скачали*")
-        return
-
-    stats = user_stats[user_id_str]
-    downloads = stats.get('downloads', 0)
-    created_orders = stats.get('created_orders', 0)
 
     try:
-        first_seen = datetime.fromisoformat(stats.get('first_seen', datetime.now().isoformat()))
-        days_active = (datetime.now() - first_seen).days
+        order_id = int(message.text.split()[1])
+        for i, order in enumerate(orders):
+            if order['id'] == order_id:
+                del orders[i]
+                save_data()
+                bot.reply_to(message, f"✅ Заказ #{order_id} удалён")
+                return
+        bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
     except:
-        days_active = 0
-
-    user_orders = [o for o in orders if o.get('user_id') == message.chat.id]
-    total_likes_received = sum(o.get('likes', 0) for o in user_orders)
-    total_likes_given = len([uid for uid in like_cooldowns if uid == user_id_str])
-
-    user_games = {}
-    for order in user_orders:
-        game = order['game']
-        user_games[game] = user_games.get(game, 0) + 1
-
-    most_popular = max(user_games.items(), key=lambda x: x[1]) if user_games else ("нет", 0)
-    avg_likes = total_likes_received / created_orders if created_orders > 0 else 0
-
-    all_users_downloads = [u.get('downloads', 0) for u in user_stats.values()]
-    better_than = sum(1 for d in all_users_downloads if d < downloads)
-    total_users = len(user_stats)
-    percentile = (better_than / total_users * 100) if total_users > 0 else 0
-
-    # Определяем текущий ранг
-    current_rank = None
-    for threshold, rank_name in sorted(RANKS.items(), reverse=True):
-        if downloads >= threshold:
-            current_rank = rank_name
-            break
-
-    premium_status = "✅ Да" if is_premium(message.from_user.id) else "❌ Нет"
-
-    text = f"👑 *ПОДРОБНАЯ СТАТИСТИКА* 👑\n\n"
-    text += f"👤 *Пользователь:* {message.from_user.first_name or 'Неизвестно'}\n"
-    text += f"🆔 *ID:* {message.from_user.id}\n"
-    text += f"💎 *Премиум:* {premium_status}\n"
-    if current_rank:
-        text += f"🏅 *Ранг:* {current_rank}\n\n"
-    else:
-        text += f"\n"
-    text += f"━━━━━━━━━━━━━━━━━━\n"
-    text += f"📊 *ОСНОВНАЯ СТАТИСТИКА*\n"
-    text += f"━━━━━━━━━━━━━━━━━━\n"
-    text += f"📥 *Скачано игр:* {downloads}\n"
-    text += f"📋 *Создано заказов:* {created_orders}\n"
-    text += f"❤️ *Получено лайков:* {total_likes_received}\n"
-    text += f"👍 *Поставлено лайков:* {total_likes_given}\n"
-    text += f"⭐ *Средний лайк:* {avg_likes:.1f}\n"
-    text += f"📅 *Активен дней:* {days_active}\n\n"
-    text += f"━━━━━━━━━━━━━━━━━━\n"
-    text += f"🏆 *ДОСТИЖЕНИЯ*\n"
-    text += f"━━━━━━━━━━━━━━━━━━\n"
-    text += f"🎮 *Любимая игра:* {most_popular[0]} ({most_popular[1]} раз)\n"
-    text += f"📊 *Вы лучше чем:* {percentile:.1f}% пользователей\n"
-
-    # Достижения
-    achievements = []
-    if downloads >= 1000:
-        achievements.append("👑 *GABEN* — 1000+ скачиваний")
-    elif downloads >= 500:
-        achievements.append("📦 *REPACKER* — 500+ скачиваний")
-    elif downloads >= 100:
-        achievements.append("🏴‍☠️ *PIRATE* — 100+ скачиваний")
-
-    if total_likes_received >= 50:
-        achievements.append("⭐ *Кумир* — 50+ лайков на заказах")
-
-    if created_orders >= 20:
-        achievements.append("📝 *Писатель* — 20+ созданных заказов")
-
-    if achievements:
-        text += "\n" + "\n".join(achievements) + "\n"
-
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')
+        bot.reply_to(message, "❌ Использование: /delorder [ID]")
 
 
-# ========== КОМАНДА TOPORDERS ==========
-@bot.message_handler(commands=['toporders'])
-def toporders_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    if not orders:
-        bot.send_message(message.chat.id, "📭 Нет заказов")
-        return
-
-    sorted_orders = sorted(orders, key=lambda x: x.get('likes', 0), reverse=True)[:10]
-
-    text = "🏆 *Топ-10 заказов по лайкам*\n\n"
-
-    for i, order in enumerate(sorted_orders, 1):
-        text += f"{i}. 🎮 {order['game']} — ❤️ {order.get('likes', 0)} лайков\n"
-        text += f"   👤 {order.get('username', 'User')} | 🆔 {order['id']}\n"
-
-    bot.send_message(message.chat.id, text, parse_mode='Markdown')
-
-
-# ========== КОМАНДА EDITORDER ==========
-@bot.message_handler(commands=['editorder'])
-def editorder_cmd(message):
-    if message.chat.type != 'private':
+# ========== КОМАНДА ADDADMIN ==========
+@bot.message_handler(commands=['addadmin'])
+def addadmin_cmd(message):
+    if str(message.from_user.id) not in admins:
         return
 
     try:
-        parts = message.text.split()
-        if len(parts) < 2:
-            bot.reply_to(message, "❌ Использование: /editorder ID")
-            return
-
-        order_id = int(parts[1])
-
-        # Ищем заказ
-        order = None
-        for o in orders:
-            if o['id'] == order_id:
-                order = o
-                break
-
-        if not order:
-            bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
-            return
-
-        # Проверяем, автор ли это
-        if order['user_id'] != message.chat.id and not is_admin(message.from_user.id):
-            bot.reply_to(message, "❌ Вы можете редактировать только свои заказы")
-            return
-
-        user_states[message.chat.id] = {
-            'state': 'editing_order',
-            'order_id': order_id,
-            'order': order
-        }
-
-        markup = types.InlineKeyboardMarkup(row_width=1)
-        markup.add(
-            types.InlineKeyboardButton("🎮 Изменить название", callback_data=f"edit_name_{order_id}"),
-            types.InlineKeyboardButton("💾 Изменить размер", callback_data=f"edit_size_{order_id}"),
-            types.InlineKeyboardButton("❌ Отмена", callback_data="edit_cancel")
-        )
-
-        bot.send_message(
-            message.chat.id,
-            f"✏️ *Редактирование заказа #{order_id}*\n\n"
-            f"Текущее название: {order['game']}\n"
-            f"Текущий размер: {order.get('size', 'N/A')}\n\n"
-            f"Что хотите изменить?",
-            parse_mode='Markdown',
-            reply_markup=markup
-        )
-
-    except Exception as e:
-        bot.reply_to(message, f"❌ Ошибка: {e}")
+        user_id = str(message.text.split()[1])
+        if user_id not in admins:
+            admins.append(user_id)
+            save_data()
+            bot.reply_to(message, f"✅ Пользователь {user_id} добавлен в админы")
+        else:
+            bot.reply_to(message, "⚠️ Уже админ")
+    except:
+        bot.reply_to(message, "❌ Использование: /addadmin [ID]")
 
 
-# ========== КОМАНДА REPORT ==========
-@bot.message_handler(commands=['report'])
-def report_cmd(message):
-    if message.chat.type != 'private':
+# ========== КОМАНДА BROADCAST ==========
+@bot.message_handler(commands=['broadcast'])
+def broadcast_cmd(message):
+    if str(message.from_user.id) not in admins:
         return
 
     try:
-        parts = message.text.split(maxsplit=2)
-        if len(parts) < 3:
-            bot.reply_to(message, "❌ Использование: /report ID_заказа причина")
-            return
+        broadcast_text = message.text.split(' ', 1)[1]
+        sent = 0
+        failed = 0
 
-        order_id = int(parts[1])
-        reason = parts[2]
-
-        # Ищем заказ
-        order = None
-        for o in orders:
-            if o['id'] == order_id:
-                order = o
-                break
-
-        if not order:
-            bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
-            return
-
-        # Создаем жалобу
-        report = {
-            'order_id': order_id,
-            'reporter_id': message.from_user.id,
-            'reporter_name': message.from_user.first_name or str(message.from_user.id),
-            'reason': reason,
-            'time': datetime.now().isoformat()
-        }
-        reports.append(report)
-        save_all()
-
-        # Уведомляем всех админов
-        admin_text = f"🚨 *Новая жалоба!*\n\n"
-        admin_text += f"📋 Заказ #{order_id}: {order['game']}\n"
-        admin_text += f"👤 Пожаловался: {message.from_user.first_name} (ID: {message.from_user.id})\n"
-        admin_text += f"📝 Причина: {reason}"
-
-        for admin_id in admins:
+        for uid in user_stats.keys():
             try:
-                bot.send_message(int(admin_id), admin_text, parse_mode='Markdown')
+                bot.send_message(int(uid), f"📢 *Объявление*\n\n{broadcast_text}", parse_mode='Markdown')
+                sent += 1
+                time.sleep(0.1)
             except:
-                pass
+                failed += 1
 
-        bot.reply_to(message, f"✅ Жалоба на заказ #{order_id} отправлена администрации")
-
-    except Exception as e:
-        bot.reply_to(message, f"❌ Ошибка: {e}")
-
-
-# ========== КОМАНДА TOP ==========
-@bot.message_handler(commands=['top'])
-def top_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    if game_stats:
-        sorted_games = sorted(game_stats.items(), key=lambda x: x[1]['downloads'], reverse=True)[:10]
-
-        text = "🔥 *Топ игр по скачиваниям*\n\n"
-        for i, (game, stats) in enumerate(sorted_games, 1):
-            text += f"{i}. 🎮 {game} — {stats['downloads']} 📥\n"
-
-        bot.send_message(message.chat.id, text, parse_mode='Markdown')
-    else:
-        bot.send_message(message.chat.id, "📊 Нет данных для топа")
+        bot.reply_to(message, f"✅ Рассылка завершена\n📤 Отправлено: {sent}\n❌ Не отправлено: {failed}")
+    except:
+        bot.reply_to(message, "❌ Использование: /broadcast [текст]")
 
 
 # ========== КОМАНДА ORDERS ==========
@@ -1187,18 +600,22 @@ def orders_cmd(message):
 
 def show_orders_page(chat_id, page=0, original_message=None):
     if not orders:
-        bot.send_message(chat_id, "📭 Нет заказов")
+        bot.send_message(chat_id, "📭 *Нет заказов*")
         return
 
-    total_pages = (len(orders) + ORDERS_PER_PAGE - 1) // ORDERS_PER_PAGE
+    # Сортируем по дате (новые сверху)
+    sorted_orders = sorted(orders, key=lambda x: datetime.fromisoformat(x['date']) if 'date' in x else datetime.min,
+                           reverse=True)
+
+    total_pages = (len(sorted_orders) + ORDERS_PER_PAGE - 1) // ORDERS_PER_PAGE
     if page >= total_pages:
         page = total_pages - 1
     if page < 0:
         page = 0
 
     start_idx = page * ORDERS_PER_PAGE
-    end_idx = min(start_idx + ORDERS_PER_PAGE, len(orders))
-    page_orders = orders[start_idx:end_idx]
+    end_idx = min(start_idx + ORDERS_PER_PAGE, len(sorted_orders))
+    page_orders = sorted_orders[start_idx:end_idx]
 
     text = f"📋 *Стол заказов* (Страница {page + 1}/{total_pages})\n\n"
 
@@ -1208,50 +625,31 @@ def show_orders_page(chat_id, page=0, original_message=None):
         except:
             order_date = "неизвестно"
 
-        user_display = get_user_display_name(
-            order.get('user_id'),
-            order.get('username'),
-            None
-        )
-
-        edit_mark = " ✏️" if (original_message and order.get('user_id') == original_message.from_user.id) else ""
-
-        text += f"🎮 *{order['game']}*{edit_mark}\n"
-        text += f"👤 {user_display}\n"
+        text += f"🎮 *{order['game']}*\n"
+        text += f"👤 {order.get('username', 'Пользователь')}\n"
         text += f"📅 {order_date} | 💾 {order.get('size', 'N/A')}\n"
         text += f"❤️ {order.get('likes', 0)} лайков\n"
         text += f"🆔 {order['id']}\n"
         text += "─\n"
 
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup = types.InlineKeyboardMarkup(row_width=3)
 
+    # Пагинация
     nav_buttons = []
     if page > 0:
-        nav_buttons.append(types.InlineKeyboardButton("⬅️ Назад", callback_data=f"orders_page_{page - 1}"))
-    nav_buttons.append(types.InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="current_page"))
+        nav_buttons.append(types.InlineKeyboardButton("⬅️", callback_data=f"orders_page_{page - 1}"))
+    nav_buttons.append(types.InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="current"))
     if page < total_pages - 1:
-        nav_buttons.append(types.InlineKeyboardButton("Вперед ➡️", callback_data=f"orders_page_{page + 1}"))
-    if nav_buttons:
-        markup.row(*nav_buttons)
+        nav_buttons.append(types.InlineKeyboardButton("➡️", callback_data=f"orders_page_{page + 1}"))
+    markup.row(*nav_buttons)
 
+    # Кнопки для заказов
     for order in page_orders:
         btn_text = f"❤️ {order['game'][:12]}"
-        if len(order['game']) > 12:
-            btn_text += "..."
-
-        if original_message and order.get('user_id') == original_message.from_user.id:
-            markup.row(
-                types.InlineKeyboardButton(btn_text, callback_data=f"like_{order['id']}"),
-                types.InlineKeyboardButton("⚠️ Жалоба", callback_data=f"report_{order['id']}"),
-                types.InlineKeyboardButton("✏️ Ред.", callback_data=f"edit_{order['id']}"),
-                types.InlineKeyboardButton("📤 Поделиться", callback_data=f"share_{order['id']}")
-            )
-        else:
-            markup.row(
-                types.InlineKeyboardButton(btn_text, callback_data=f"like_{order['id']}"),
-                types.InlineKeyboardButton("⚠️ Жалоба", callback_data=f"report_{order['id']}"),
-                types.InlineKeyboardButton("📤 Поделиться", callback_data=f"share_{order['id']}")
-            )
+        markup.add(
+            types.InlineKeyboardButton(btn_text, callback_data=f"like_{order['id']}"),
+            types.InlineKeyboardButton("📤", callback_data=f"share_{order['id']}")
+        )
 
     bot.send_message(chat_id, text, parse_mode='Markdown', reply_markup=markup)
 
@@ -1263,7 +661,7 @@ def neworder_cmd(message):
         return
 
     user_states[message.chat.id] = 'waiting_game'
-    bot.reply_to(message, "📝 *Напиши название заказа:*", parse_mode='Markdown')
+    bot.send_message(message.chat.id, "📝 *Напиши название игры:*", parse_mode='Markdown')
 
 
 @bot.message_handler(func=lambda m: user_states.get(m.chat.id) == 'waiting_game')
@@ -1272,7 +670,7 @@ def get_game(message):
         return
 
     user_states[message.chat.id] = {'game': message.text, 'state': 'waiting_size'}
-    bot.reply_to(message, "💾 *Напиши размер игры:*", parse_mode='Markdown')
+    bot.send_message(message.chat.id, "💾 *Напиши размер в ГБ:*", parse_mode='Markdown')
 
 
 @bot.message_handler(
@@ -1301,9 +699,9 @@ def get_size(message):
         user_stats[user_id_str] = {'downloads': 0, 'created_orders': 0}
     user_stats[user_id_str]['created_orders'] = user_stats[user_id_str].get('created_orders', 0) + 1
 
-    save_all()
+    save_data()
     del user_states[message.chat.id]
-    bot.reply_to(message, f"✅ *Заказ создан и находится в столе заказов!*\n🆔 ID: {order_id}", parse_mode='Markdown')
+    bot.send_message(message.chat.id, f"✅ *Заказ создан!*\n🆔 ID: {order_id}", parse_mode='Markdown')
 
 
 # ========== КОМАНДА MYORDERS ==========
@@ -1312,11 +710,9 @@ def myorders_cmd(message):
     if message.chat.type != 'private':
         return
 
-    user_id = message.chat.id
-    user_orders = [o for o in orders if o.get('user_id') == user_id]
-
+    user_orders = [o for o in orders if o.get('user_id') == message.chat.id]
     if not user_orders:
-        bot.send_message(message.chat.id, "📭 У вас нет заказов")
+        bot.send_message(message.chat.id, "📭 *У вас нет заказов*")
         return
 
     text = "👤 *Мои заказы*\n\n"
@@ -1329,56 +725,50 @@ def myorders_cmd(message):
     bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
-# ========== ФУНКЦИЯ ОТПРАВКИ ИГР ==========
-def send_game_files(chat_id, game_name, user_id=None):
-    sent_count = 0
+# ========== КОМАНДА STATS ==========
+@bot.message_handler(commands=['stats'])
+def stats_cmd(message):
+    if message.chat.type != 'private':
+        return
 
-    if game_name in GAMES_DATABASE:
-        bot.send_message(chat_id, f"🎮 *{game_name.upper()}*\n📥 Отправляю...", parse_mode='Markdown')
+    user_id_str = str(message.from_user.id)
+    if user_id_str not in user_stats:
+        bot.send_message(message.chat.id, "📊 *Вы еще ничего не скачали*")
+        return
 
-        for file_id in GAMES_DATABASE[game_name]:
-            try:
-                bot.copy_message(chat_id, GAMES_CHANNEL_ID, file_id)
-                sent_count += 1
-                time.sleep(0.3)
-            except:
-                pass
+    stats = user_stats[user_id_str]
+    downloads = stats.get('downloads', 0)
+    created_orders = stats.get('created_orders', 0)
 
-        if user_id:
-            user_id_str = str(user_id)
-            old_downloads = user_stats[user_id_str].get('downloads', 0) if user_id_str in user_stats else 0
+    # Заказы пользователя
+    user_orders = [o for o in orders if o.get('user_id') == message.chat.id]
+    total_likes = sum(o.get('likes', 0) for o in user_orders)
 
-            if user_id_str not in user_stats:
-                user_stats[user_id_str] = {'downloads': 0, 'created_orders': 0}
+    text = f"👤 *Ваша статистика*\n\n"
+    text += f"📥 Скачано игр: {downloads}\n"
+    text += f"📋 Создано заказов: {created_orders}\n"
+    text += f"❤️ Получено лайков: {total_likes}\n"
 
-            user_stats[user_id_str]['downloads'] = user_stats[user_id_str].get('downloads', 0) + 1
-            user_stats[user_id_str]['last_seen'] = datetime.now().isoformat()
+    bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
-            new_downloads = user_stats[user_id_str]['downloads']
 
-            # Проверяем обновление ранга
-            new_rank = check_rank_update(user_id_str, old_downloads, new_downloads)
-            if new_rank:
-                try:
-                    bot.send_message(
-                        int(user_id_str),
-                        f"🏆 *Поздравляем!*\n\nВы достигли ранга *{new_rank}*!",
-                        parse_mode='Markdown'
-                    )
-                except:
-                    pass
+# ========== КОМАНДА TOP ==========
+@bot.message_handler(commands=['top'])
+def top_cmd(message):
+    if message.chat.type != 'private':
+        return
 
-            if game_name not in game_stats:
-                game_stats[game_name] = {'downloads': 0, 'last_download': None}
-            game_stats[game_name]['downloads'] += 1
-            game_stats[game_name]['last_download'] = datetime.now().isoformat()
+    # Сортируем игры по скачиваниям (если есть статистика)
+    if game_stats:
+        sorted_games = sorted(game_stats.items(), key=lambda x: x[1]['downloads'], reverse=True)[:10]
 
-            save_all()
+        text = "🔥 *Топ игр по скачиваниям*\n\n"
+        for i, (game, stats) in enumerate(sorted_games, 1):
+            text += f"{i}. 🎮 {game} — {stats['downloads']} 📥\n"
 
-        bot.send_message(chat_id, f"✅ *Готово! Отправлено {sent_count} файлов*")
-        return True
-
-    return False
+        bot.send_message(message.chat.id, text, parse_mode='Markdown')
+    else:
+        bot.send_message(message.chat.id, "📊 *Нет данных для топа*")
 
 
 # ========== ОБРАБОТЧИК ПОИСКА ИГР ==========
@@ -1393,6 +783,7 @@ def search_handler(message):
         send_game_files(message.chat.id, query, message.from_user.id)
         return
 
+    # Поиск похожих
     similar = []
     for game in GAMES_DATABASE.keys():
         if query in game or game in query:
@@ -1400,10 +791,9 @@ def search_handler(message):
 
     if similar:
         text = f"❌ *'{message.text}' не найдено*\n\n"
-        text += "🎯 Возможно вы искали:\n\n"
+        text += "🎯 *Возможно вы искали:*\n\n"
 
         markup = types.InlineKeyboardMarkup(row_width=1)
-
         for game in similar[:5]:
             markup.add(types.InlineKeyboardButton(
                 f"🎮 {game.title()}",
@@ -1411,14 +801,11 @@ def search_handler(message):
             ))
 
         text += "Нажмите на кнопку, чтобы скачать:"
-
         bot.send_message(message.chat.id, text, parse_mode='Markdown', reply_markup=markup)
-
     else:
-        text = f"❌ *'{message.text}' не имеется, попробуйте написать по другому, если до сих пор нет закажите!*\n\n"
+        text = f"❌ *'{message.text}' не найдено*\n\n"
         text += "📝 *Создать заказ:* /neworder\n"
         text += "📋 *Посмотреть заказы:* /orders"
-
         bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
 
@@ -1432,48 +819,20 @@ def callback_handler(call):
                 if 'liked_by' not in order:
                     order['liked_by'] = []
                 if str(call.from_user.id) in order['liked_by']:
-                    bot.answer_callback_query(call.id, "❌ Лайк уже был!")
+                    bot.answer_callback_query(call.id, "❌ Уже лайкали")
                     return
                 order['likes'] = order.get('likes', 0) + 1
                 order['liked_by'].append(str(call.from_user.id))
-                save_all()
+                save_data()
                 bot.answer_callback_query(call.id, "❤️ Лайк поставлен!")
                 return
-
-    elif call.data.startswith('report_'):
-        order_id = int(call.data.split('_')[1])
-
-        # Находим заказ
-        order = None
-        for o in orders:
-            if o['id'] == order_id:
-                order = o
-                break
-
-        if not order:
-            bot.answer_callback_query(call.id, "❌ Заказ не найден")
-            return
-
-        # Запрашиваем причину
-        user_states[call.from_user.id] = {
-            'state': 'waiting_report_reason',
-            'order_id': order_id
-        }
-
-        bot.edit_message_text(
-            f"📝 *Напишите причину жалобы на заказ #{order_id}*",
-            call.message.chat.id,
-            call.message.message_id,
-            parse_mode='Markdown'
-        )
-        bot.answer_callback_query(call.id)
 
     elif call.data.startswith('share_'):
         order_id = int(call.data.split('_')[1])
         for order in orders:
             if order['id'] == order_id:
-                text = f"📤 *Заказ #{order_id}*\n🎮 {order['game']}\n💾 {order.get('size', 'N/A')}"
-                bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
+                share_text = f"📤 *Заказ #{order_id}*\n🎮 {order['game']}\n💾 {order.get('size', 'N/A')}"
+                bot.send_message(call.message.chat.id, share_text, parse_mode='Markdown')
                 bot.answer_callback_query(call.id)
                 return
 
@@ -1486,65 +845,6 @@ def callback_handler(call):
         page = int(call.data.split('_')[2])
         bot.delete_message(call.message.chat.id, call.message.message_id)
         show_orders_page(call.message.chat.id, page, call.message)
-
-    elif call.data.startswith('edit_'):
-        if call.data == 'edit_cancel':
-            if call.from_user.id in user_states:
-                del user_states[call.from_user.id]
-            bot.edit_message_text(
-                "❌ Редактирование отменено",
-                call.message.chat.id,
-                call.message.message_id,
-                parse_mode='Markdown'
-            )
-            return
-
-        parts = call.data.split('_')
-        if len(parts) < 3:
-            return
-
-        action = parts[1]
-        order_id = int(parts[2])
-
-        order = None
-        for o in orders:
-            if o['id'] == order_id:
-                order = o
-                break
-
-        if not order:
-            bot.answer_callback_query(call.id, "❌ Заказ не найден")
-            return
-
-        if order['user_id'] != call.from_user.id and not is_admin(call.from_user.id):
-            bot.answer_callback_query(call.id, "❌ Это не ваш заказ")
-            return
-
-        if action == 'name':
-            user_states[call.from_user.id] = {
-                'state': 'editing_name',
-                'order_id': order_id
-            }
-            bot.edit_message_text(
-                f"✏️ *Введите новое название для заказа #{order_id}*",
-                call.message.chat.id,
-                call.message.message_id,
-                parse_mode='Markdown'
-            )
-            bot.answer_callback_query(call.id)
-
-        elif action == 'size':
-            user_states[call.from_user.id] = {
-                'state': 'editing_size',
-                'order_id': order_id
-            }
-            bot.edit_message_text(
-                f"✏️ *Введите новый размер для заказа #{order_id} (в ГБ)*",
-                call.message.chat.id,
-                call.message.message_id,
-                parse_mode='Markdown'
-            )
-            bot.answer_callback_query(call.id)
 
     elif call.data == "show_orders":
         bot.delete_message(call.message.chat.id, call.message.message_id)
@@ -1561,101 +861,17 @@ def callback_handler(call):
     elif call.data == "show_top":
         bot.delete_message(call.message.chat.id, call.message.message_id)
         top_cmd(call.message)
-    elif call.data == "show_premium":
+    elif call.data == "show_mod":
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        premium_cmd(call.message)
-    elif call.data == "show_help":
+        moderator_cmd(call.message)
+    elif call.data == "mod_stats":
+        text = f"📊 *Статистика*\n\nЗаказов: {len(orders)}\nПользователей: {len(user_stats)}"
+        bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
+    elif call.data == "refresh_mod":
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        help_cmd(call.message)
-
-
-# ========== ОБРАБОТЧИК РЕДАКТИРОВАНИЯ НАЗВАНИЯ ==========
-@bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'editing_name')
-def process_edit_name(message):
-    if message.chat.type != 'private':
-        return
-
-    data = user_states[message.chat.id]
-    order_id = data['order_id']
-    new_name = message.text
-
-    for order in orders:
-        if order['id'] == order_id:
-            order['game'] = new_name
-            save_all()
-            bot.reply_to(message, f"✅ Название заказа #{order_id} изменено на '{new_name}'")
-            break
-
-    del user_states[message.chat.id]
-
-
-# ========== ОБРАБОТЧИК РЕДАКТИРОВАНИЯ РАЗМЕРА ==========
-@bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'editing_size')
-def process_edit_size(message):
-    if message.chat.type != 'private':
-        return
-
-    data = user_states[message.chat.id]
-    order_id = data['order_id']
-    new_size = message.text.upper() + " ГБ"
-
-    for order in orders:
-        if order['id'] == order_id:
-            order['size'] = new_size
-            save_all()
-            bot.reply_to(message, f"✅ Размер заказа #{order_id} изменён на '{new_size}'")
-            break
-
-    del user_states[message.chat.id]
-
-
-# ========== ОБРАБОТЧИК ЖАЛОБЫ ==========
-@bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'waiting_report_reason')
-def process_report_reason(message):
-    if message.chat.type != 'private':
-        return
-
-    data = user_states[message.chat.id]
-    order_id = data['order_id']
-    reason = message.text
-
-    # Находим заказ
-    order = None
-    for o in orders:
-        if o['id'] == order_id:
-            order = o
-            break
-
-    if not order:
-        bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
-        del user_states[message.chat.id]
-        return
-
-    # Создаем жалобу
-    report = {
-        'order_id': order_id,
-        'reporter_id': message.from_user.id,
-        'reporter_name': message.from_user.first_name or str(message.from_user.id),
-        'reason': reason,
-        'time': datetime.now().isoformat()
-    }
-    reports.append(report)
-    save_all()
-
-    # Уведомляем всех админов
-    admin_text = f"🚨 *Новая жалоба!*\n\n"
-    admin_text += f"📋 Заказ #{order_id}: {order['game']}\n"
-    admin_text += f"👤 Пожаловался: {message.from_user.first_name} (ID: {message.from_user.id})\n"
-    admin_text += f"📝 Причина: {reason}"
-
-    for admin_id in admins:
-        try:
-            bot.send_message(int(admin_id), admin_text, parse_mode='Markdown')
-        except:
-            pass
-
-    bot.reply_to(message, f"✅ Жалоба на заказ #{order_id} отправлена администрации")
-    del user_states[message.chat.id]
+        moderator_cmd(call.message)
+    elif call.data == "current":
+        bot.answer_callback_query(call.id)
 
 
 # ========== ЗАПУСК ==========
@@ -1664,21 +880,14 @@ if __name__ == "__main__":
     print("🤖 ЗАПУСК FERWES GAMES БОТА")
     print("=" * 60)
 
-    files_to_create = [
-        ORDERS_FILE, LIKES_FILE, ADMINS_FILE,
-        USER_STATS_FILE, LIKE_COOLDOWN_FILE,
-        GAME_STATS_FILE, WEEKLY_STATS_FILE,
-        PREMIUM_FILE, BANNED_FILE, MUTED_FILE,
-        ORDER_STATS_FILE, REPORTS_FILE
-    ]
-
+    # Создаём файлы
+    files_to_create = [ORDERS_FILE, USER_STATS_FILE, ADMINS_FILE]
     for file in files_to_create:
         if not os.path.exists(file):
             with open(file, 'w') as f:
-                if file.endswith('.json'):
-                    json.dump([] if 'orders' in file or file == REPORTS_FILE else {}, f)
+                json.dump([] if 'orders' in file else {}, f)
 
-    load_all()
+    load_data()
 
     print(f"🎮 Игр в базе: {len(GAMES_DATABASE)}")
     print(f"📋 Заказов: {len(orders)}")
@@ -1688,9 +897,9 @@ if __name__ == "__main__":
     print("⚡ Бот запущен и готов!")
     print("=" * 60)
 
-    while True:
-        try:
-            bot.polling(none_stop=True, interval=0, timeout=20)
-        except Exception as e:
-            print(f"❌ Ошибка: {e}")
-            time.sleep(5)
+    # Запуск
+    try:
+        bot.polling(none_stop=True, skip_pending=True)
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        time.sleep(5)
