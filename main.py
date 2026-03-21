@@ -19,7 +19,7 @@ ADMINS_FILE = 'admins.json'
 LIKE_COOLDOWN_FILE = 'like_cooldown.json'
 GAME_STATS_FILE = 'game_stats.json'
 
-# Папка с картинками
+# Папка с картинками (ПРОВЕРЬ ЭТОТ ПУТЬ!)
 IMAGES_DIR = r"C:\Users\BWPC\PycharmProjects\PythonProject1\t12"
 
 # Константы
@@ -34,13 +34,12 @@ user_states = {}
 like_cooldowns = {}
 game_stats = {}
 
-# ========== БАЗА ВСЕХ ИГР (ТОЛЬКО ТЕ, ЧТО ЕСТЬ В КАНАЛЕ) ==========
+# ========== БАЗА ВСЕХ ИГР ==========
 GAMES_DATABASE = {
     # A
     'antonblast': list(range(913, 915)) + [1749],
     'assassins creed': list(range(1028, 1033)) + [1749],
     'artmoney': list(range(1770, 1771)) + [1749],
-
     # B
     'bad cheese': list(range(1651, 1654)) + [1749],
     'beamng drive': list(range(861, 873)) + [1749],
@@ -50,7 +49,6 @@ GAMES_DATABASE = {
     'blender': list(range(1306, 1310)) + [1749],
     'borderlands 2': list(range(776, 782)) + [1749],
     'bully': list(range(1639, 1642)) + [1749],
-
     # C
     'call of duty modern warfare 2': list(range(1212, 1221)) + [1749],
     'call of duty ww2': list(range(521, 541)) + [1749],
@@ -62,7 +60,6 @@ GAMES_DATABASE = {
     'cry of fear': list(range(1481, 1486)) + [1749],
     'cuphead': list(range(817, 821)) + [1749],
     'cyberpunk 2077': list(range(658, 704)) + [1749],
-
     # D
     'dark souls 3': list(range(880, 894)) + [1749],
     'dead space': list(range(1576, 1580)) + [1749],
@@ -73,10 +70,8 @@ GAMES_DATABASE = {
     'distant worlds 2': list(range(1644, 1650)) + [1749],
     'doom the dark ages': list(range(1706, 1749)) + [1749],
     'dying light: the beast': list(range(1502, 1525)) + [1749],
-
     # E
     'elden ring': list(range(552, 587)) + [1749],
-
     # F
     'fallout 3': list(range(1231, 1236)) + [1749],
     'fallout 4': list(range(1277, 1296)) + [1749],
@@ -94,23 +89,16 @@ GAMES_DATABASE = {
     'friday night funkin': list(range(748, 750)) + [1749],
     'frostpunk': list(range(1222, 1228)) + [1749],
     'frostpunk 2': list(range(1619, 1627)) + [1749],
-
     # G
     'garrys mod': list(range(858, 860)) + [1749],
     'ghost of tsushima': list(range(1527, 1551)) + [1749],
     'ghostrunner': list(range(1692, 1701)) + [1749],
     'goat simulator': list(range(618, 621)) + [1749],
     'gta 3': list(range(1088, 1090)) + [1749],
-    'gta iii': list(range(1088, 1090)) + [1749],
     'gta 4': list(range(799, 810)) + [1749],
-    'gta iv': list(range(799, 810)) + [1749],
     'gta 5': list(range(705, 742)) + [1749],
-    'gta v': list(range(705, 742)) + [1749],
     'gta san andreas': list(range(1259, 1270)) + [1749],
     'gta vice city': list(range(1450, 1452)) + [1749],
-    'gta liberty city stories': list(range(1082, 1084)) + [1749],
-    'gta vice city stories': list(range(902, 904)) + [1749],
-
     # H
     'half life 2': list(range(1207, 1211)) + [1749],
     'hard time 3': list(range(1006, 1009)) + [1749],
@@ -125,18 +113,14 @@ GAMES_DATABASE = {
     'hotline miami 2': [1159, 1160] + [1749],
     'humanit z': list(range(1096, 1110)) + [1749],
     'hytale': list(range(1398, 1402)) + [1749],
-
     # J
     'jewel match': list(range(234, 236)) + [1749],
-
     # K
     'korsary 3': list(range(1370, 1372)) + [1749],
-
     # L
     'left 4 dead 2': list(range(1207, 1211)) + [1749],
     'little nightmares 3': list(range(174, 182)) + [1749],
     'lonarpg': list(range(1447, 1449)) + [1749],
-
     # M
     'mafia 1': list(range(1241, 1243)) + [1749],
     'mafia 2': list(range(942, 947)) + [1749],
@@ -147,17 +131,14 @@ GAMES_DATABASE = {
     'my summer car': list(range(1441, 1443)) + [1749],
     'my winter car': list(range(1347, 1349)) + [1749],
     'miside': list(range(1057, 1059)) + [1749],
-
     # N
     'nier automata': list(range(164, 173)) + [1749],
     'nier replicant': list(range(1670, 1682)) + [1749],
     'no im not a human': list(range(517, 520)) + [1749],
     'no mans sky': list(range(1751, 1765)) + [1749],
-
     # O
     'one shot': list(range(1065, 1069)) + [1749],
     'orion sandbox': list(range(814, 816)) + [1749],
-
     # P
     'palworld': list(range(202, 216)) + [1749],
     'payday the heist': list(range(876, 879)) + [1749],
@@ -169,10 +150,8 @@ GAMES_DATABASE = {
     'project zomboid': list(range(1093, 1095)) + [1749],
     'prototype 1': list(range(895, 901)) + [1749],
     'prototype 2': list(range(1044, 1050)) + [1749],
-
     # Q
     'quasimorph': list(range(589, 591)) + [1749],
-
     # R
     'red dead redemption': list(range(542, 548)) + [1749],
     'red dead redemption 2': list(range(428, 485)) + [1749],
@@ -181,7 +160,6 @@ GAMES_DATABASE = {
     'rimworld': list(range(1298, 1301)) + [1749],
     'risk of rain 2': list(range(1612, 1614)) + [1749],
     'rock star life simulator': list(range(184, 186)) + [1749],
-
     # S
     'stalker shadow of chernobyl': list(range(1326, 1329)) + [1749],
     'stalker anomaly': list(range(1628, 1634)) + [1749],
@@ -194,7 +172,6 @@ GAMES_DATABASE = {
     'streets of rogue 2': list(range(1041, 1043)) + [1749],
     'system shock 2 remaster': list(range(187, 192)) + [1749],
     'swat 4': list(range(1766, 1769)) + [1749],
-
     # T
     'teardown': list(range(906, 912)) + [1749],
     'terraria': list(range(1459, 1461)) + [1749],
@@ -205,17 +182,14 @@ GAMES_DATABASE = {
     'the witcher 3': list(range(986, 1005)) + [1749],
     'third crisis': list(range(1302, 1305)) + [1749],
     'tomb raider 2013': list(range(1487, 1496)) + [1749],
-
     # U
     'uber soldier': list(range(197, 201)) + [1749],
     'undertale': list(range(1376, 1378)) + [1749],
-
     # W
     'warhammer 40000 gladius relics of war': list(range(1702, 1705)) + [1749],
     'watch dogs 2': list(range(1010, 1027)) + [1749],
     'witcher 3': list(range(986, 1005)) + [1749],
     'worldbox': list(range(1036, 1040)) + [1749],
-
     # КИРИЛЛИЦА
     'корсары 3': list(range(1370, 1372)) + [1749],
 }
@@ -265,8 +239,10 @@ def save_data():
 
 
 # ========== ФУНКЦИЯ ОТПРАВКИ С КАРТИНКОЙ ==========
-def send_with_image(chat_id, image_path, caption, reply_markup=None, parse_mode='Markdown'):
-    """Отправляет сообщение с картинкой, если картинка есть — иначе просто текст"""
+def send_with_image(chat_id, image_name, caption, reply_markup=None, parse_mode='Markdown'):
+    """Отправляет сообщение с картинкой из папки t12"""
+    image_path = os.path.join(IMAGES_DIR, image_name)
+
     try:
         if os.path.exists(image_path):
             with open(image_path, 'rb') as img:
@@ -280,11 +256,11 @@ def send_with_image(chat_id, image_path, caption, reply_markup=None, parse_mode=
         else:
             bot.send_message(chat_id, caption, parse_mode=parse_mode, reply_markup=reply_markup)
     except Exception as e:
-        print(f"Ошибка отправки картинки: {e}")
+        print(f"Ошибка отправки картинки {image_name}: {e}")
         bot.send_message(chat_id, caption, parse_mode=parse_mode, reply_markup=reply_markup)
 
 
-# ========== КОМАНДА START С КАРТИНКОЙ ==========
+# ========== КОМАНДА START ==========
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
     if message.chat.type != 'private':
@@ -313,6 +289,8 @@ def start_cmd(message):
 🎲 `/randgame` — случайная игра  
 🏆 `/toporders` — топ заказов  
 ✏️ `/editorder [ID]` — редактировать заказ
+🎯 `/today` — игра дня
+🎁 `/bonus` — получить бонус
 
 💡 *Совет:* если игры нет в базе — создай заказ, и мы добавим её!
 ━━━━━━━━━━━━━━━━━━
@@ -329,11 +307,10 @@ def start_cmd(message):
         types.InlineKeyboardButton("ℹ️ Помощь", callback_data="show_help")
     )
 
-    image_path = os.path.join(IMAGES_DIR, "Start_2026.jpg")
-    send_with_image(message.chat.id, image_path, caption, markup)
+    send_with_image(message.chat.id, "Start_2026.jpg", caption, markup)
 
 
-# ========== КОМАНДА HELP С КАРТИНКОЙ ==========
+# ========== КОМАНДА HELP ==========
 @bot.message_handler(commands=['help'])
 def help_cmd(message):
     if message.chat.type != 'private':
@@ -347,6 +324,8 @@ def help_cmd(message):
 `/start` — главное меню
 `/help` — эта справка
 `/stats` — моя статистика
+`/today` — игра дня
+`/bonus` — получить бонус
 
 ━━━━━━━━━━━━━━━━━━
 📦 *ЗАКАЗЫ*
@@ -372,6 +351,11 @@ def help_cmd(message):
 • `cyberpunk 2077`
 
 ━━━━━━━━━━━━━━━━━━
+🎁 *БОНУСЫ*
+━━━━━━━━━━━━━━━━━━
+`/bonus` — раз в 7 дней даёт +1 скачивание
+
+━━━━━━━━━━━━━━━━━━
 ❓ *ВОПРОСЫ?*
 ━━━━━━━━━━━━━━━━━━
 По всем вопросам: @sweacher
@@ -381,14 +365,125 @@ def help_cmd(message):
     markup.add(
         types.InlineKeyboardButton("📋 Заказы", callback_data="show_orders"),
         types.InlineKeyboardButton("📝 Новый заказ", callback_data="new_order"),
-        types.InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+        types.InlineKeyboardButton("📊 Статистика", callback_data="my_stats"),
+        types.InlineKeyboardButton("🎁 Бонус", callback_data="get_bonus")
     )
 
-    image_path = os.path.join(IMAGES_DIR, "Help_2026.jpg")
-    send_with_image(message.chat.id, image_path, caption, markup)
+    send_with_image(message.chat.id, "Help_2026.jpg", caption, markup)
 
 
-# ========== КОМАНДА STATS С КАРТИНКОЙ (УЛУЧШЕННАЯ) ==========
+# ========== КОМАНДА TODAY (ИГРА ДНЯ) ==========
+@bot.message_handler(commands=['today'])
+def today_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    # Выбираем случайную игру
+    game_name = random.choice(list(GAMES_DATABASE.keys()))
+
+    caption = f"""🎲 *ИГРА ДНЯ*
+
+━━━━━━━━━━━━━━━━━━
+🎮 {game_name.upper()}
+
+📥 Нажми на кнопку ниже, чтобы скачать!
+
+💡 *Совет:* сегодня особенный день — игра дня будет доступна весь день!
+
+━━━━━━━━━━━━━━━━━━
+📢 @FerwesGames"""
+
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(f"🎮 Скачать {game_name}", callback_data=f"play_{game_name}"))
+
+    send_with_image(message.chat.id, "Stats_2026.jpg", caption, markup)
+
+
+# ========== КОМАНДА BONUS ==========
+@bot.message_handler(commands=['bonus'])
+def bonus_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = str(message.from_user.id)
+
+    # Проверяем, когда последний раз получали бонус
+    last_bonus = user_stats.get(user_id, {}).get('last_bonus')
+
+    if last_bonus:
+        try:
+            last_date = datetime.fromisoformat(last_bonus)
+            days_passed = (datetime.now() - last_date).days
+            if days_passed < 7:
+                days_left = 7 - days_passed
+                caption = f"🎁 *БОНУС НЕДОСТУПЕН*
+
+━━━━━━━━━━━━━━━━━━
+⏳ Следующий
+бонус
+будет
+доступен
+через
+{days_left}
+дней.
+
+💡 Бонус
+даёт + 1
+к
+скачиваниям!
+━━━━━━━━━━━━━━━━━━
+📢
+
+@FerwesGames
+
+
+"""
+                send_with_image(message.chat.id, "Stats_2026.jpg", caption)
+                return
+        except:
+            pass
+
+    # Начисляем бонус
+    if user_id not in user_stats:
+        user_stats[user_id] = {'downloads': 0, 'created_orders': 0}
+
+    user_stats[user_id]['downloads'] = user_stats[user_id].get('downloads', 0) + 1
+    user_stats[user_id]['last_bonus'] = datetime.now().isoformat()
+    user_stats[user_id]['last_active'] = datetime.now().isoformat()
+    save_data()
+
+    downloads = user_stats[user_id]['downloads']
+
+    caption = f"""🎁 *БОНУС
+ПОЛУЧЕН! *
+
+━━━━━━━━━━━━━━━━━━
+✅ Вы
+получили + 1
+к
+скачиваниям!
+
+📊 Теперь
+у
+вас: {downloads}
+скачиваний
+
+💡 Следующий
+бонус
+через
+7
+дней!
+━━━━━━━━━━━━━━━━━━
+📢
+
+@FerwesGames
+
+
+"""
+
+    send_with_image(message.chat.id, "Stats_2026.jpg", caption)
+
+# ========== КОМАНДА STATS ==========
 @bot.message_handler(commands=['stats'])
 def stats_cmd(message):
     if message.chat.type != 'private':
@@ -397,9 +492,8 @@ def stats_cmd(message):
     user_id_str = str(message.from_user.id)
 
     if user_id_str not in user_stats:
-        bot.send_message(message.chat.id,
-                         "📊 *Вы еще ничего не скачали*\n\nНапиши название игры и начни коллекционировать!",
-                         parse_mode='Markdown')
+        caption = "📊 *ВЫ ЕЩЁ НИЧЕГО НЕ СКАЧАЛИ*\n\nНапиши название игры и начни коллекционировать!\n\n📢 @FerwesGames"
+        send_with_image(message.chat.id, "Stats_2026.jpg", caption)
         return
 
     stats = user_stats[user_id_str]
@@ -419,105 +513,114 @@ def stats_cmd(message):
     # Ранг пользователя
     if downloads >= 500:
         rank = "👑 ЛЕГЕНДА"
-        rank_desc = "500+ скачиваний"
     elif downloads >= 250:
         rank = "⭐ ГУРУ"
-        rank_desc = "250+ скачиваний"
     elif downloads >= 100:
         rank = "🎖️ ВЕТЕРАН"
-        rank_desc = "100+ скачиваний"
     elif downloads >= 50:
         rank = "⚡ ПРОФИ"
-        rank_desc = "50+ скачиваний"
     elif downloads >= 25:
         rank = "🔄 ЛЮБИТЕЛЬ"
-        rank_desc = "25+ скачиваний"
     elif downloads >= 10:
         rank = "🆕 НОВИЧОК"
-        rank_desc = "10+ скачиваний"
     else:
         rank = "🌱 НАЧИНАЮЩИЙ"
-        rank_desc = f"{10 - downloads} до новичка"
 
     # Прогресс до следующего ранга
     if downloads < 10:
-        next_rank = "НОВИЧОК"
         need = 10 - downloads
-        progress_percent = downloads * 10
+        progress = downloads * 10
     elif downloads < 25:
-        next_rank = "ЛЮБИТЕЛЬ"
         need = 25 - downloads
-        progress_percent = downloads * 4
+        progress = downloads * 4
     elif downloads < 50:
-        next_rank = "ПРОФИ"
         need = 50 - downloads
-        progress_percent = downloads * 2
+        progress = downloads * 2
     elif downloads < 100:
-        next_rank = "ВЕТЕРАН"
         need = 100 - downloads
-        progress_percent = downloads
+        progress = downloads
     elif downloads < 250:
-        next_rank = "ГУРУ"
         need = 250 - downloads
-        progress_percent = downloads * 0.4
+        progress = downloads * 0.4
     elif downloads < 500:
-        next_rank = "ЛЕГЕНДА"
         need = 500 - downloads
-        progress_percent = downloads * 0.2
+        progress = downloads * 0.2
     else:
-        next_rank = "МАКСИМУМ"
         need = 0
-        progress_percent = 100
+        progress = 100
 
     # Статистика заказов
     active_orders = sum(1 for o in user_orders if o.get('status') != 'done')
     done_orders = sum(1 for o in user_orders if o.get('status') == 'done')
 
-    caption = f"""📊 *ТВОЯ СТАТИСТИКА*
+    caption = f"""📊 *ТВОЯ
+СТАТИСТИКА *
 
 ━━━━━━━━━━━━━━━━━━
-👤 *ПРОФИЛЬ*
+👤 *ПРОФИЛЬ *
 ━━━━━━━━━━━━━━━━━━
 🏆 Ранг: {rank}
-📊 Рейтинг: {rank_desc}
-📅 В игре: {days_active} дней
+📅 В
+игре: {days_active}
+дней
 
 ━━━━━━━━━━━━━━━━━━
-📥 *АКТИВНОСТЬ*
+📥 *АКТИВНОСТЬ *
 ━━━━━━━━━━━━━━━━━━
-🎮 Скачано игр: {downloads}
-📋 Создано заказов: {created_orders}
-❤️ Получено лайков: {total_likes_received}
-📦 Активных заказов: {active_orders}
+🎮 Скачано
+игр: {downloads}
+📋 Создано
+заказов: {created_orders}
+❤️
+Получено
+лайков: {total_likes_received}
+📦 Активных
+заказов: {active_orders}
 ✅ Выполненных: {done_orders}
 
 ━━━━━━━━━━━━━━━━━━
-📈 *ПРОГРЕСС*
+📈 *ПРОГРЕСС *
 ━━━━━━━━━━━━━━━━━━
-До ранга *{next_rank}*: {need} скачиваний
-▰▰▰▰▰▰▰▰▰▰ {progress_percent:.0f}%
+До
+следующего
+ранга: {need}
+скачиваний
+▰▰▰▰▰▰▰▰▰▰ {progress: .0f} %
 
 ━━━━━━━━━━━━━━━━━━
-💡 *СОВЕТЫ*
+💡 *СОВЕТЫ *
 ━━━━━━━━━━━━━━━━━━
-• Ищи игры по названию
-• Ставь лайки к заказам
-• Создавай заказы на новые игры
+• Ищи
+игры
+по
+названию
+• Ставь
+лайки
+к
+заказам
+• Используй / bonus
+раз
+в
+неделю
 
-📢 Наш канал: @FerwesGames"""
+📢
+
+@FerwesGames
+
+
+"""
 
     markup = types.InlineKeyboardMarkup()
     markup.add(
         types.InlineKeyboardButton("📋 Заказы", callback_data="show_orders"),
         types.InlineKeyboardButton("🔥 Топ игр", callback_data="show_top"),
+        types.InlineKeyboardButton("🎁 Бонус", callback_data="get_bonus"),
         types.InlineKeyboardButton("🔄 Обновить", callback_data="refresh_stats")
     )
 
-    image_path = os.path.join(IMAGES_DIR, "Stats_2026.jpg")
-    send_with_image(message.chat.id, image_path, caption, markup)
+    send_with_image(message.chat.id, "Stats_2026.jpg", caption, markup)
 
-
-# ========== КОМАНДА MODERATOR С КАРТИНКОЙ ==========
+# ========== КОМАНДА MODERATOR ==========
 @bot.message_handler(commands=['moderator'])
 def moderator_cmd(message):
     if str(message.from_user.id) not in admins or message.chat.type != 'private':
@@ -535,32 +638,48 @@ def moderator_cmd(message):
         if last and datetime.fromisoformat(last).date() == today:
             active_today += 1
 
-    caption = f"""👑 *ПАНЕЛЬ МОДЕРАТОРА*
+    caption = f"""👑 *ПАНЕЛЬ
+МОДЕРАТОРА *
 
 ━━━━━━━━━━━━━━━━━━
-📊 *ОБЩАЯ СТАТИСТИКА*
+📊 *ОБЩАЯ
+СТАТИСТИКА *
 ━━━━━━━━━━━━━━━━━━
 👥 Пользователей: {total_users}
 📋 Заказов: {total_orders}
 📥 Скачиваний: {total_downloads}
-❤️ Лайков: {total_likes}
-📅 Активных сегодня: {active_today}
+❤️
+Лайков: {total_likes}
+📅 Активных
+сегодня: {active_today}
 
 ━━━━━━━━━━━━━━━━━━
-⚡ *АДМИН-КОМАНДЫ*
+⚡ *АДМИН - КОМАНДЫ *
 ━━━━━━━━━━━━━━━━━━
-`/delorder [ID]` — удалить заказ
-`/addadmin [ID]` — добавить админа
-`/broadcast [текст]` — рассылка
-`/set_status [ID] [статус]` — изменить статус
-`/done [ID]` — отметить как готово
+` / delorder[ID]
+` — удалить
+заказ
+` / addadmin[ID]
+` — добавить
+админа
+` / broadcast[текст]
+` — рассылка
+` / set_status[ID][статус]
+` — изменить
+статус
+` / done[ID]
+` — отметить
+как
+готово
 
 ━━━━━━━━━━━━━━━━━━
-📊 *СТАТУСЫ ЗАКАЗОВ*
+📊 *СТАТУСЫ
+ЗАКАЗОВ *
 ━━━━━━━━━━━━━━━━━━
 🟢 active — активный
 🟡 found — найден
-🔴 done — готово"""
+🔴 done — готово
+"""
 
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
@@ -572,11 +691,9 @@ def moderator_cmd(message):
         types.InlineKeyboardButton("🔄 Обновить", callback_data="refresh_mod")
     )
 
-    image_path = os.path.join(IMAGES_DIR, "Moderator_2026.jpg")
-    send_with_image(message.chat.id, image_path, caption, markup)
+    send_with_image(message.chat.id, "Moderator_2026.jpg", caption, markup)
 
-
-# ========== ОСТАЛЬНЫЕ КОМАНДЫ (БЕЗ КАРТИНОК) ==========
+# ========== ОСТАЛЬНЫЕ КОМАНДЫ ==========
 @bot.message_handler(commands=['randgame'])
 def randgame_cmd(message):
     if message.chat.type != 'private':
@@ -584,7 +701,6 @@ def randgame_cmd(message):
 
     game_name = random.choice(list(GAMES_DATABASE.keys()))
     send_game_files(message.chat.id, game_name, message.from_user.id)
-
 
 @bot.message_handler(commands=['top'])
 def top_cmd(message):
@@ -601,7 +717,6 @@ def top_cmd(message):
         bot.send_message(message.chat.id, text, parse_mode='Markdown')
     else:
         bot.send_message(message.chat.id, "📊 *Нет данных для топа*")
-
 
 @bot.message_handler(commands=['toporders'])
 def toporders_cmd(message):
@@ -621,21 +736,18 @@ def toporders_cmd(message):
 
     bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
-
 @bot.message_handler(commands=['orders'])
 def orders_cmd(message):
     if message.chat.type != 'private':
         return
     show_orders_page(message.chat.id, 0, message)
 
-
 def show_orders_page(chat_id, page=0, original_message=None):
     if not orders:
         bot.send_message(chat_id, "📭 *Нет заказов*")
         return
 
-    sorted_orders = sorted(orders, key=lambda x: datetime.fromisoformat(x['date']) if 'date' in x else datetime.min,
-                           reverse=True)
+    sorted_orders = sorted(orders, key=lambda x: datetime.fromisoformat(x['date']) if 'date' in x else datetime.min, reverse=True)
 
     total_pages = (len(sorted_orders) + ORDERS_PER_PAGE - 1) // ORDERS_PER_PAGE
     if page >= total_pages:
@@ -669,10 +781,10 @@ def show_orders_page(chat_id, page=0, original_message=None):
 
     nav_buttons = []
     if page > 0:
-        nav_buttons.append(types.InlineKeyboardButton("⬅️", callback_data=f"orders_page_{page - 1}"))
-    nav_buttons.append(types.InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="current"))
+        nav_buttons.append(types.InlineKeyboardButton("⬅️", callback_data=f"orders_page_{page-1}"))
+    nav_buttons.append(types.InlineKeyboardButton(f"{page+1}/{total_pages}", callback_data="current"))
     if page < total_pages - 1:
-        nav_buttons.append(types.InlineKeyboardButton("➡️", callback_data=f"orders_page_{page + 1}"))
+        nav_buttons.append(types.InlineKeyboardButton("➡️", callback_data=f"orders_page_{page+1}"))
     markup.row(*nav_buttons)
 
     for order in page_orders:
@@ -681,8 +793,6 @@ def show_orders_page(chat_id, page=0, original_message=None):
 
     bot.send_message(chat_id, text, parse_mode='Markdown', reply_markup=markup)
 
-
-# ========== ОСТАЛЬНЫЕ КОМАНДЫ (ЗАКАЗЫ) ==========
 @bot.message_handler(commands=['neworder'])
 def neworder_cmd(message):
     if message.chat.type != 'private':
@@ -690,7 +800,6 @@ def neworder_cmd(message):
 
     user_states[message.chat.id] = 'waiting_game'
     bot.send_message(message.chat.id, "📝 *Напиши название игры, которую хочешь заказать:*", parse_mode='Markdown')
-
 
 @bot.message_handler(func=lambda m: user_states.get(m.chat.id) == 'waiting_game')
 def get_game(message):
@@ -700,9 +809,7 @@ def get_game(message):
     user_states[message.chat.id] = {'game': message.text, 'state': 'waiting_size'}
     bot.send_message(message.chat.id, "💾 *Напиши примерный размер игры (в ГБ):*", parse_mode='Markdown')
 
-
-@bot.message_handler(
-    func=lambda m: user_states.get(m.chat.id) and user_states[m.chat.id].get('state') == 'waiting_size')
+@bot.message_handler(func=lambda m: user_states.get(m.chat.id) and user_states[m.chat.id].get('state') == 'waiting_size')
 def get_size(message):
     if message.chat.type != 'private':
         return
@@ -732,10 +839,7 @@ def get_size(message):
     save_data()
     del user_states[message.chat.id]
 
-    bot.send_message(message.chat.id,
-                     f"✅ *Заказ создан!*\n🆔 ID: {order_id}\n\nСледить за заказами можно по команде /orders",
-                     parse_mode='Markdown')
-
+    bot.send_message(message.chat.id, f"✅ *Заказ создан!*\n🆔 ID: {order_id}\n\nСледить за заказами можно по команде /orders", parse_mode='Markdown')
 
 @bot.message_handler(commands=['myorders'])
 def myorders_cmd(message):
@@ -744,8 +848,7 @@ def myorders_cmd(message):
 
     user_orders = [o for o in orders if o.get('user_id') == message.chat.id]
     if not user_orders:
-        bot.send_message(message.chat.id, "📭 *У вас нет заказов*\n\nСоздай первый заказ командой /neworder",
-                         parse_mode='Markdown')
+        bot.send_message(message.chat.id, "📭 *У вас нет заказов*\n\nСоздай первый заказ командой /neworder", parse_mode='Markdown')
         return
 
     text = "👤 *МОИ ЗАКАЗЫ*\n\n"
@@ -757,7 +860,6 @@ def myorders_cmd(message):
         text += "─\n"
 
     bot.send_message(message.chat.id, text, parse_mode='Markdown')
-
 
 @bot.message_handler(commands=['editorder'])
 def editorder_cmd(message):
@@ -804,7 +906,6 @@ def editorder_cmd(message):
     except:
         bot.reply_to(message, "❌ Использование: /editorder [ID]")
 
-
 # ========== ФУНКЦИЯ ОТПРАВКИ ИГР ==========
 def send_game_files(chat_id, game_name, user_id=None):
     if game_name not in GAMES_DATABASE:
@@ -815,7 +916,7 @@ def send_game_files(chat_id, game_name, user_id=None):
 
     bot.send_message(chat_id, f"🎮 *{game_name.upper()}*\n📥 Отправляю...", parse_mode='Markdown')
 
-    for i, file_id in enumerate(file_ids):
+    for file_id in file_ids:
         try:
             bot.copy_message(chat_id, GAMES_CHANNEL_ID, file_id)
             sent_count += 1
@@ -838,7 +939,6 @@ def send_game_files(chat_id, game_name, user_id=None):
 
     bot.send_message(chat_id, f"✅ *Готово!* Отправлено {sent_count} файлов\n\n👉 По вопросам: @sweacher")
     return True
-
 
 # ========== ОБРАБОТЧИК ПОИСКА ИГР ==========
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith('/'))
@@ -873,7 +973,6 @@ def search_handler(message):
         text += "💡 *Совет:* попробуй написать название на английском"
         bot.send_message(message.chat.id, text, parse_mode='Markdown')
 
-
 # ========== АДМИН-КОМАНДЫ ==========
 @bot.message_handler(commands=['broadcast'])
 def broadcast_cmd(message):
@@ -893,11 +992,9 @@ def broadcast_cmd(message):
             except:
                 failed += 1
 
-        bot.reply_to(message, f"✅ *Рассылка завершена*\n📤 Отправлено: {sent}\n❌ Не отправлено: {failed}",
-                     parse_mode='Markdown')
+        bot.reply_to(message, f"✅ *Рассылка завершена*\n📤 Отправлено: {sent}\n❌ Не отправлено: {failed}", parse_mode='Markdown')
     except:
         bot.reply_to(message, "❌ Использование: /broadcast [текст]")
-
 
 @bot.message_handler(commands=['addadmin'])
 def addadmin_cmd(message):
@@ -915,7 +1012,6 @@ def addadmin_cmd(message):
     except:
         bot.reply_to(message, "❌ Использование: /addadmin [ID]")
 
-
 @bot.message_handler(commands=['delorder'])
 def delorder_cmd(message):
     if str(message.from_user.id) not in admins:
@@ -932,7 +1028,6 @@ def delorder_cmd(message):
         bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
     except:
         bot.reply_to(message, "❌ Использование: /delorder [ID]")
-
 
 @bot.message_handler(commands=['set_status'])
 def set_status_cmd(message):
@@ -961,27 +1056,21 @@ def set_status_cmd(message):
                 bot.reply_to(message, f"✅ Статус заказа #{order_id}: {old_status} → {new_status}")
 
                 if new_status == 'done' and old_status != 'done':
-                    # Уведомляем автора и лайкнувших
                     if order['user_id'] != 0:
                         try:
-                            bot.send_message(order['user_id'],
-                                             f"✅ *ЗАКАЗ ВЫПОЛНЕН!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nИгра уже в канале!",
-                                             parse_mode='Markdown')
+                            bot.send_message(order['user_id'], f"✅ *ЗАКАЗ ВЫПОЛНЕН!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nИгра уже в канале!", parse_mode='Markdown')
                         except:
                             pass
 
                     for uid in order.get('liked_by', []):
                         try:
-                            bot.send_message(int(uid),
-                                             f"✅ *ЗАКАЗ ГОТОВ!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nСпасибо за лайк!",
-                                             parse_mode='Markdown')
+                            bot.send_message(int(uid), f"✅ *ЗАКАЗ ГОТОВ!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nСпасибо за лайк!", parse_mode='Markdown')
                         except:
                             pass
                 return
         bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
     except:
         bot.reply_to(message, "❌ Ошибка")
-
 
 @bot.message_handler(commands=['done'])
 def done_cmd(message):
@@ -999,20 +1088,15 @@ def done_cmd(message):
                 order['status'] = 'done'
                 save_data()
 
-                # Уведомления
                 if order['user_id'] != 0:
                     try:
-                        bot.send_message(order['user_id'],
-                                         f"✅ *ВАШ ЗАКАЗ ВЫПОЛНЕН!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nИгра уже в канале!",
-                                         parse_mode='Markdown')
+                        bot.send_message(order['user_id'], f"✅ *ВАШ ЗАКАЗ ВЫПОЛНЕН!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nИгра уже в канале!", parse_mode='Markdown')
                     except:
                         pass
 
                 for uid in order.get('liked_by', []):
                     try:
-                        bot.send_message(int(uid),
-                                         f"✅ *ЗАКАЗ ГОТОВ!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nСпасибо за лайк!",
-                                         parse_mode='Markdown')
+                        bot.send_message(int(uid), f"✅ *ЗАКАЗ ГОТОВ!*\n\n🎮 {order['game']}\n🆔 #{order_id}\n\nСпасибо за лайк!", parse_mode='Markdown')
                     except:
                         pass
 
@@ -1021,7 +1105,6 @@ def done_cmd(message):
         bot.reply_to(message, f"❌ Заказ #{order_id} не найден")
     except:
         bot.reply_to(message, "❌ Использование: /done [ID]")
-
 
 # ========== CALLBACK ОБРАБОТЧИК ==========
 @bot.callback_query_handler(func=lambda call: True)
@@ -1082,13 +1165,11 @@ def callback_handler(call):
 
         if action == 'name':
             user_states[call.from_user.id] = {'state': 'editing_name', 'order_id': order_id}
-            bot.edit_message_text(f"✏️ *Введите новое название для заказа #{order_id}*", call.message.chat.id,
-                                  call.message.message_id, parse_mode='Markdown')
+            bot.edit_message_text(f"✏️ *Введите новое название для заказа #{order_id}*", call.message.chat.id, call.message.message_id, parse_mode='Markdown')
             bot.answer_callback_query(call.id)
         elif action == 'size':
             user_states[call.from_user.id] = {'state': 'editing_size', 'order_id': order_id}
-            bot.edit_message_text(f"✏️ *Введите новый размер для заказа #{order_id} (в ГБ)*", call.message.chat.id,
-                                  call.message.message_id, parse_mode='Markdown')
+            bot.edit_message_text(f"✏️ *Введите новый размер для заказа #{order_id} (в ГБ)*", call.message.chat.id, call.message.message_id, parse_mode='Markdown')
             bot.answer_callback_query(call.id)
 
     elif call.data == "show_orders":
@@ -1112,22 +1193,22 @@ def callback_handler(call):
     elif call.data == "show_help":
         bot.delete_message(call.message.chat.id, call.message.message_id)
         help_cmd(call.message)
+    elif call.data == "get_bonus":
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bonus_cmd(call.message)
     elif call.data == "refresh_stats":
         stats_cmd(call.message)
     elif call.data == "mod_active":
         filtered = [o for o in orders if o.get('status') == 'active']
-        text = "🟢 *АКТИВНЫЕ ЗАКАЗЫ*\n\n" + "\n".join(
-            [f"ID {o['id']}: {o['game']}" for o in filtered[:10]]) if filtered else "Нет активных заказов"
+        text = "🟢 *АКТИВНЫЕ ЗАКАЗЫ*\n\n" + "\n".join([f"ID {o['id']}: {o['game']}" for o in filtered[:10]]) if filtered else "Нет активных заказов"
         bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
     elif call.data == "mod_found":
         filtered = [o for o in orders if o.get('status') == 'found']
-        text = "🟡 *НАЙДЕННЫЕ ЗАКАЗЫ*\n\n" + "\n".join(
-            [f"ID {o['id']}: {o['game']}" for o in filtered[:10]]) if filtered else "Нет найденных заказов"
+        text = "🟡 *НАЙДЕННЫЕ ЗАКАЗЫ*\n\n" + "\n".join([f"ID {o['id']}: {o['game']}" for o in filtered[:10]]) if filtered else "Нет найденных заказов"
         bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
     elif call.data == "mod_done":
         filtered = [o for o in orders if o.get('status') == 'done']
-        text = "🔴 *ГОТОВЫЕ ЗАКАЗЫ*\n\n" + "\n".join(
-            [f"ID {o['id']}: {o['game']}" for o in filtered[:10]]) if filtered else "Нет готовых заказов"
+        text = "🔴 *ГОТОВЫЕ ЗАКАЗЫ*\n\n" + "\n".join([f"ID {o['id']}: {o['game']}" for o in filtered[:10]]) if filtered else "Нет готовых заказов"
         bot.send_message(call.message.chat.id, text, parse_mode='Markdown')
     elif call.data == "mod_stats":
         total_users = len(user_stats)
@@ -1140,7 +1221,6 @@ def callback_handler(call):
         moderator_cmd(call.message)
     elif call.data == "current":
         bot.answer_callback_query(call.id)
-
 
 @bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'editing_name')
 def process_edit_name(message):
@@ -1160,7 +1240,6 @@ def process_edit_name(message):
 
     del user_states[message.chat.id]
 
-
 @bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'editing_size')
 def process_edit_size(message):
     if message.chat.type != 'private':
@@ -1178,7 +1257,6 @@ def process_edit_size(message):
             break
 
     del user_states[message.chat.id]
-
 
 # ========== ЗАПУСК ==========
 if __name__ == "__main__":
@@ -1202,4 +1280,9 @@ if __name__ == "__main__":
     print("⚡ Бот запущен и готов!")
     print("=" * 60)
 
-    bot.polling(none_stop=True, skip_pending=True)
+    # Запускаем бота с увеличенными таймаутами
+    try:
+        bot.polling(none_stop=True, skip_pending=True, timeout=60, long_polling_timeout=30)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        time.sleep(5)
