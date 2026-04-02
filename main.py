@@ -37,6 +37,7 @@ GAMES_DATABASE = {
     'antonblast': list(range(913, 915)) + [1749],
     'assassins creed': list(range(1028, 1033)) + [1749],
     'artmoney': list(range(1770, 1771)) + [1749],
+    'arda launcher': list(range(1784, 1787)) + [1749],
     # B
     'bad cheese': list(range(1651, 1654)) + [1749],
     'beamng drive': list(range(861, 873)) + [1749],
@@ -46,6 +47,7 @@ GAMES_DATABASE = {
     'blender': list(range(1306, 1310)) + [1749],
     'borderlands 2': list(range(776, 782)) + [1749],
     'bully': list(range(1639, 1642)) + [1749],
+    'battlefield 3': list(range(1773, 1784)) + [1749],
     # C
     'call of duty modern warfare 2': list(range(1212, 1221)) + [1749],
     'call of duty ww2': list(range(521, 541)) + [1749],
@@ -234,48 +236,49 @@ def save_data():
     with open(GAME_STATS_FILE, 'w', encoding='utf-8') as f:
         json.dump(game_stats, f, ensure_ascii=False, indent=2)
 
+    # ========== КОМАНДА START ==========
+    text = """🎮 *Добро пожаловать в Ferwes Games!*
 
-# ========== КОМАНДА START ==========
-@bot.message_handler(commands=['start'])
-def start_cmd(message):
-    if message.chat.type != 'private':
-        return
+    Напиши название игры, чтобы скачать.
 
-    user_id = str(message.from_user.id)
-    if user_id not in user_stats:
-        user_stats[user_id] = {
-            'downloads': 0,
-            'created_orders': 0,
-            'first_seen': datetime.now().isoformat(),
-            'last_active': datetime.now().isoformat()
-        }
-        save_data()
+    📌 Подробнее: /help"""
 
-    text = """🎮 *FERWES GAMES* — твой проводник в мир игр!
+    # ========== КОМАНДА HELP ==========
+    text = """📚 *Помощь*
 
-🔍 *Напиши название игры* — я найду её в базе и отправлю.
+    ━━━━━━━━━━━━━━━━━━
+    📦 *Заказы*
+    ━━━━━━━━━━━━━━━━━━
+    /orders — стол заказов
+    /neworder — создать заказ
+    /myorders — мои заказы
+    /editorder [ID] — редактировать
 
-━━━━━━━━━━━━━━━━━━
-📋 `/orders` — стол заказов  
-📝 `/neworder` — создать заказ  
-👤 `/myorders` — мои заказы  
-📊 `/stats` — моя статистика  
-🔥 `/top` — топ игр  
-🎲 `/randgame` — случайная игра  
-🏆 `/toporders` — топ заказов  
-✏️ `/editorder [ID]` — редактировать заказ
-🎯 `/today` — игра дня
-🎁 `/bonus` — получить бонус
-📜 `/rules` — правила
-🔔 `/notify` — уведомления
-👥 `/online` — кто в сети
-📈 `/leaderboard` — таблица лидеров
-🎨 `/favorite` — избранное
-⭐ `/rate` — оценить игру
+    ━━━━━━━━━━━━━━━━━━
+    🎲 *Игры*
+    ━━━━━━━━━━━━━━━━━━
+    /top — топ-10 игр
+    /randgame — случайная игра
+    /toporders — топ заказов
+    /today — игра дня
+    /rate [название] [1-5] — оценить
+    /favorite [название] — в избранное
+    /favorite — избранное
 
-💡 *Совет:* если игры нет в базе — создай заказ, и мы добавим её!
-━━━━━━━━━━━━━━━━━━
-📢 Наш канал: @FerwesGames"""
+    ━━━━━━━━━━━━━━━━━━
+    👤 *Профиль*
+    ━━━━━━━━━━━━━━━━━━
+    /stats — моя статистика
+    /bonus — бонус
+    /leaderboard — лидеры
+    /online — кто в сети
+    /notify — уведомления
+
+    ━━━━━━━━━━━━━━━━━━
+    💡 *Нет игры?* → /neworder
+    ━━━━━━━━━━━━━━━━━━
+    📢 @FerwesGames"""
+
 
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
