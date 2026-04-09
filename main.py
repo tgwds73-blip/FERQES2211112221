@@ -5,7 +5,6 @@ import os
 import time
 import random
 from datetime import datetime, timedelta
-from collections import Counter
 
 # ========== НАСТРОЙКИ ==========
 BOT_TOKEN = '8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0'
@@ -27,6 +26,11 @@ LIKE_COOLDOWN_DAYS = 1000
 ORDERS_PER_PAGE = 5
 ORDER_EXPIRE_DAYS = 60
 
+# ========== БАННЕР ==========
+BANNER_TEXT = """🔥 БЕЗ ВСТРОЕННЫХ ПРОГРАММ ИЛИ ВИРУСОВ
+🔥 FERWES / GAMES (https://t.me/FerwesGames)
+🔥 FERWES / GRID (https://t.me/addlist/AW1LBTA9xa45NDIy)"""
+
 # ========== ДАННЫЕ ==========
 orders = []
 user_stats = {}
@@ -38,147 +42,172 @@ banned_users = []
 muted_users = []
 action_log = []
 
-# ========== БАЗА ВСЕХ ИГР ==========
+# ========== БАЗА ВСЕХ ИГР (С БАННЕРОМ В КОНЦЕ) ==========
 GAMES_DATABASE = {
-    'antonblast': list(range(913, 915)),
-    'assassins creed': list(range(1028, 1033)),
-    'artmoney': [1770, 1771],
-    'bad cheese': list(range(1651, 1654)),
-    'battlefield 3': list(range(1773, 1784)),
-    'bf3': list(range(1773, 1784)),
-    'beamng drive': list(range(861, 873)),
-    'beholder': list(range(823, 825)),
-    'bendy and the ink machine': list(range(652, 654)),
-    'bioshock remaster': list(range(1070, 1080)),
-    'blender': list(range(1306, 1310)),
-    'borderlands 2': list(range(776, 782)),
-    'bully': list(range(1639, 1642)),
-    'call of duty modern warfare 2': list(range(1212, 1221)),
-    'call of duty ww2': list(range(521, 541)),
-    'caves of qud': list(range(655, 657)),
-    'chesscraft': list(range(1655, 1657)),
-    'clair obscur: expedition 33': list(range(1552, 1575)),
-    'construction simulator 4': list(range(1373, 1375)),
-    'counter strike 1.6': list(range(1453, 1455)),
-    'cry of fear': list(range(1481, 1486)),
-    'cuphead': list(range(817, 821)),
-    'cyberpunk 2077': list(range(658, 704)),
-    'dark souls 3': list(range(880, 894)),
-    'dead space': list(range(1576, 1580)),
-    'dead space remake': list(range(1581, 1599)),
-    'detroit become human': list(range(1407, 1436)),
-    'devil may cry 4': list(range(1244, 1258)),
-    'dispatch': list(range(1311, 1320)),
-    'distant worlds 2': list(range(1644, 1650)),
-    'doom the dark ages': list(range(1706, 1748)),
-    'dying light: the beast': list(range(1502, 1525)),
-    'elden ring': list(range(552, 587)),
-    'fallout 3': list(range(1231, 1236)),
-    'fallout 4': list(range(1277, 1296)),
-    'far cry': list(range(1658, 1661)),
-    'far cry 2': list(range(1662, 1665)),
-    'far cry 3': list(range(783, 787)),
-    'far cry 4': list(range(1354, 1369)),
-    'far cry 5': list(range(242, 254)),
-    'farm frenzy': list(range(1456, 1458)),
-    'fifa 17': list(range(916, 931)),
-    'finding frankie': list(range(622, 626)),
-    'five nights at freddys': list(range(948, 950)),
-    'five nights at freddys secret of the mimic': list(range(1462, 1473)),
-    'fl studio 25': list(range(1153, 1156)),
-    'friday night funkin': list(range(748, 750)),
-    'frostpunk': list(range(1222, 1228)),
-    'frostpunk 2': list(range(1619, 1627)),
-    'garrys mod': list(range(858, 860)),
-    'ghost of tsushima': list(range(1527, 1551)),
-    'ghostrunner': list(range(1692, 1701)),
-    'goat simulator': list(range(618, 621)),
-    'gta 3': list(range(1088, 1090)),
-    'gta 4': list(range(799, 810)),
-    'gta 5': list(range(705, 742)),
-    'gta san andreas': list(range(1259, 1270)),
-    'gta vice city': list(range(1450, 1452)),
-    'half life 2': list(range(1207, 1211)),
-    'hard time 3': list(range(1006, 1009)),
-    'hatred': list(range(1667, 1669)),
-    'hearts of iron 4': list(range(743, 747)),
-    'hearts of iron 4: ultimate bundle': list(range(1497, 1501)),
-    'hitman': list(range(962, 985)),
-    'hitman blood money': list(range(951, 960)),
-    'hollow knight': list(range(1060, 1062)),
-    'hollow knight silksong': list(range(1600, 1602)),
-    'hotline miami': list(range(1085, 1087)),
-    'hotline miami 2': [1159, 1160],
-    'humanit z': list(range(1096, 1110)),
-    'hytale': list(range(1398, 1402)),
-    'jewel match': list(range(234, 236)),
-    'korsary 3': list(range(1370, 1372)),
-    'left 4 dead 2': list(range(1207, 1211)),
-    'little nightmares 3': list(range(174, 182)),
-    'lonarpg': list(range(1447, 1449)),
-    'mafia 1': list(range(1241, 1243)),
-    'mafia 2': list(range(942, 947)),
-    'metro 2033': list(range(1051, 1056)),
-    'metro last light redux': list(range(1606, 1611)),
-    'minecraft': list(range(932, 935)),
-    'my gaming club': list(range(811, 813)),
-    'my summer car': list(range(1441, 1443)),
-    'my winter car': list(range(1347, 1349)),
-    'miside': list(range(1057, 1059)),
-    'nier automata': list(range(164, 173)),
-    'nier replicant': list(range(1670, 1682)),
-    'no im not a human': list(range(517, 520)),
-    'no mans sky': list(range(1751, 1765)),
-    'one shot': list(range(1065, 1069)),
-    'orion sandbox': list(range(814, 816)),
-    'palworld': list(range(202, 216)),
-    'payday the heist': list(range(876, 879)),
-    'people playground': list(range(1603, 1605)),
-    'plants vs zombies': list(range(549, 551)),
-    'portal 2': list(range(1207, 1211)),
-    'portal knights': list(range(1237, 1239)),
-    'postal 2': list(range(1615, 1617)),
-    'project zomboid': list(range(1093, 1095)),
-    'prototype 1': list(range(895, 901)),
-    'prototype 2': list(range(1044, 1050)),
-    'quasimorph': list(range(589, 591)),
-    'red dead redemption': list(range(542, 548)),
-    'red dead redemption 2': list(range(428, 485)),
-    'resident evil revelations 2': list(range(788, 798)),
-    'resident evil village': list(range(826, 845)),
-    'rimworld': list(range(1298, 1301)),
-    'risk of rain 2': list(range(1612, 1614)),
-    'rock star life simulator': list(range(184, 186)),
-    'stalker shadow of chernobyl': list(range(1326, 1329)),
-    'stalker anomaly': list(range(1628, 1634)),
-    'sally face': list(range(628, 632)),
-    'scorn': list(range(217, 227)),
-    'slim rancher': list(range(853, 857)),
-    'slime rancher 2': list(range(1323, 1325)),
-    'spider man remastered': list(range(486, 516)),
-    'stray': list(range(936, 941)),
-    'streets of rogue 2': list(range(1041, 1043)),
-    'system shock 2 remaster': list(range(187, 192)),
-    'swat 4': list(range(1766, 1769)),
-    'teardown': list(range(906, 912)),
-    'terraria': list(range(1459, 1461)),
-    'the forest': list(range(633, 635)),
-    'the last of us': list(range(1119, 1152)),
-    'the long drive': list(range(1444, 1446)),
-    'the spike': list(range(846, 852)),
-    'the witcher 3': list(range(986, 1005)),
-    'third crisis': list(range(1302, 1305)),
-    'tomb raider 2013': list(range(1487, 1496)),
-    'uber soldier': list(range(197, 201)),
-    'undertale': list(range(1376, 1378)),
-    'warhammer 40000 gladius relics of war': list(range(1702, 1705)),
-    'watch dogs 2': list(range(1010, 1027)),
-    'witcher 3': list(range(986, 1005)),
-    'worldbox': list(range(1036, 1040)),
-    'корсары 3': list(range(1370, 1372)),
-    'arda launcher': list(range(1784, 1787)),
-    'arda': list(range(1784, 1787)),
+    # A
+    'antonblast': list(range(913, 915)) + [1749],
+    'assassins creed': list(range(1028, 1033)) + [1749],
+    'artmoney': [1770, 1771] + [1749],
+    # B
+    'bad cheese': list(range(1651, 1654)) + [1749],
+    'battlefield 3': list(range(1773, 1784)) + [1749],
+    'bf3': list(range(1773, 1784)) + [1749],
+    'beamng drive': list(range(861, 873)) + [1749],
+    'beholder': list(range(823, 825)) + [1749],
+    'bendy and the ink machine': list(range(652, 654)) + [1749],
+    'bioshock remaster': list(range(1070, 1080)) + [1749],
+    'blender': list(range(1306, 1310)) + [1749],
+    'borderlands 2': list(range(776, 782)) + [1749],
+    'bully': list(range(1639, 1642)) + [1749],
+    # C
+    'call of duty modern warfare 2': list(range(1212, 1221)) + [1749],
+    'call of duty ww2': list(range(521, 541)) + [1749],
+    'caves of qud': list(range(655, 657)) + [1749],
+    'chesscraft': list(range(1655, 1657)) + [1749],
+    'clair obscur: expedition 33': list(range(1552, 1575)) + [1749],
+    'construction simulator 4': list(range(1373, 1375)) + [1749],
+    'counter strike 1.6': list(range(1453, 1455)) + [1749],
+    'cry of fear': list(range(1481, 1486)) + [1749],
+    'cuphead': list(range(817, 821)) + [1749],
+    'cyberpunk 2077': list(range(658, 704)) + [1749],
+    # D
+    'dark souls 3': list(range(880, 894)) + [1749],
+    'dead space': list(range(1576, 1580)) + [1749],
+    'dead space remake': list(range(1581, 1599)) + [1749],
+    'detroit become human': list(range(1407, 1436)) + [1749],
+    'devil may cry 4': list(range(1244, 1258)) + [1749],
+    'dispatch': list(range(1311, 1320)) + [1749],
+    'distant worlds 2': list(range(1644, 1650)) + [1749],
+    'doom the dark ages': list(range(1706, 1748)) + [1749],
+    'dying light: the beast': list(range(1502, 1525)) + [1749],
+    # E
+    'elden ring': list(range(552, 587)) + [1749],
+    # F
+    'fallout 3': list(range(1231, 1236)) + [1749],
+    'fallout 4': list(range(1277, 1296)) + [1749],
+    'far cry': list(range(1658, 1661)) + [1749],
+    'far cry 2': list(range(1662, 1665)) + [1749],
+    'far cry 3': list(range(783, 787)) + [1749],
+    'far cry 4': list(range(1354, 1369)) + [1749],
+    'far cry 5': list(range(242, 254)) + [1749],
+    'farm frenzy': list(range(1456, 1458)) + [1749],
+    'fifa 17': list(range(916, 931)) + [1749],
+    'finding frankie': list(range(622, 626)) + [1749],
+    'five nights at freddys': list(range(948, 950)) + [1749],
+    'five nights at freddys secret of the mimic': list(range(1462, 1473)) + [1749],
+    'fl studio 25': list(range(1153, 1156)) + [1749],
+    'friday night funkin': list(range(748, 750)) + [1749],
+    'frostpunk': list(range(1222, 1228)) + [1749],
+    'frostpunk 2': list(range(1619, 1627)) + [1749],
+    # G
+    'garrys mod': list(range(858, 860)) + [1749],
+    'ghost of tsushima': list(range(1527, 1551)) + [1749],
+    'ghostrunner': list(range(1692, 1701)) + [1749],
+    'goat simulator': list(range(618, 621)) + [1749],
+    'god of war': list(range(1787, 1805)) + [1749],
+    'gta 3': list(range(1088, 1090)) + [1749],
+    'gta 4': list(range(799, 810)) + [1749],
+    'gta 5': list(range(705, 742)) + [1749],
+    'gta san andreas': list(range(1259, 1270)) + [1749],
+    'gta vice city': list(range(1450, 1452)) + [1749],
+    # H
+    'half life 2': list(range(1207, 1211)) + [1749],
+    'hard time 3': list(range(1006, 1009)) + [1749],
+    'hatred': list(range(1667, 1669)) + [1749],
+    'hearts of iron 4': list(range(743, 747)) + [1749],
+    'hearts of iron 4: ultimate bundle': list(range(1497, 1501)) + [1749],
+    'hitman': list(range(962, 985)) + [1749],
+    'hitman blood money': list(range(951, 960)) + [1749],
+    'hollow knight': list(range(1060, 1062)) + [1749],
+    'hollow knight silksong': list(range(1600, 1602)) + [1749],
+    'hotline miami': list(range(1085, 1087)) + [1749],
+    'hotline miami 2': [1159, 1160] + [1749],
+    'humanit z': list(range(1096, 1110)) + [1749],
+    'hytale': list(range(1398, 1402)) + [1749],
+    # J
+    'jewel match': list(range(234, 236)) + [1749],
+    # K
+    'korsary 3': list(range(1370, 1372)) + [1749],
+    # L
+    'left 4 dead 2': list(range(1207, 1211)) + [1749],
+    'little nightmares 3': list(range(174, 182)) + [1749],
+    'lonarpg': list(range(1447, 1449)) + [1749],
+    # M
+    'mafia 1': list(range(1241, 1243)) + [1749],
+    'mafia 2': list(range(942, 947)) + [1749],
+    'metro 2033': list(range(1051, 1056)) + [1749],
+    'metro last light redux': list(range(1606, 1611)) + [1749],
+    'minecraft': list(range(932, 935)) + [1749],
+    'my gaming club': list(range(811, 813)) + [1749],
+    'my summer car': list(range(1441, 1443)) + [1749],
+    'my winter car': list(range(1347, 1349)) + [1749],
+    'miside': list(range(1057, 1059)) + [1749],
+    # N
+    'nier automata': list(range(164, 173)) + [1749],
+    'nier replicant': list(range(1670, 1682)) + [1749],
+    'no im not a human': list(range(517, 520)) + [1749],
+    'no mans sky': list(range(1751, 1765)) + [1749],
+    # O
+    'one shot': list(range(1065, 1069)) + [1749],
+    'orion sandbox': list(range(814, 816)) + [1749],
+    # P
+    'palworld': list(range(202, 216)) + [1749],
+    'payday the heist': list(range(876, 879)) + [1749],
+    'people playground': list(range(1603, 1605)) + [1749],
+    'plants vs zombies': list(range(549, 551)) + [1749],
+    'portal 2': list(range(1207, 1211)) + [1749],
+    'portal knights': list(range(1237, 1239)) + [1749],
+    'postal 2': list(range(1615, 1617)) + [1749],
+    'project zomboid': list(range(1093, 1095)) + [1749],
+    'prototype 1': list(range(895, 901)) + [1749],
+    'prototype 2': list(range(1044, 1050)) + [1749],
+    # Q
+    'quasimorph': list(range(589, 591)) + [1749],
+    # R
+    'red dead redemption': list(range(542, 548)) + [1749],
+    'red dead redemption 2': list(range(428, 485)) + [1749],
+    'resident evil revelations 2': list(range(788, 798)) + [1749],
+    'resident evil village': list(range(826, 845)) + [1749],
+    'rimworld': list(range(1298, 1301)) + [1749],
+    'risk of rain 2': list(range(1612, 1614)) + [1749],
+    'rock star life simulator': list(range(184, 186)) + [1749],
+    # S
+    'stalker shadow of chernobyl': list(range(1326, 1329)) + [1749],
+    'stalker anomaly': list(range(1628, 1634)) + [1749],
+    'sally face': list(range(628, 632)) + [1749],
+    'scorn': list(range(217, 227)) + [1749],
+    'slim rancher': list(range(853, 857)) + [1749],
+    'slime rancher 2': list(range(1323, 1325)) + [1749],
+    'spider man remastered': list(range(486, 516)) + [1749],
+    'stray': list(range(936, 941)) + [1749],
+    'streets of rogue 2': list(range(1041, 1043)) + [1749],
+    'system shock 2 remaster': list(range(187, 192)) + [1749],
+    'swat 4': list(range(1766, 1769)) + [1749],
+    # T
+    'teardown': list(range(906, 912)) + [1749],
+    'terraria': list(range(1459, 1461)) + [1749],
+    'the forest': list(range(633, 635)) + [1749],
+    'the last of us': list(range(1119, 1152)) + [1749],
+    'the long drive': list(range(1444, 1446)) + [1749],
+    'the spike': list(range(846, 852)) + [1749],
+    'the witcher 3': list(range(986, 1005)) + [1749],
+    'third crisis': list(range(1302, 1305)) + [1749],
+    'tomb raider 2013': list(range(1487, 1496)) + [1749],
+    # U
+    'uber soldier': list(range(197, 201)) + [1749],
+    'undertale': list(range(1376, 1378)) + [1749],
+    # W
+    'warhammer 40000 gladius relics of war': list(range(1702, 1705)) + [1749],
+    'watch dogs 2': list(range(1010, 1027)) + [1749],
+    'witcher 3': list(range(986, 1005)) + [1749],
+    'worldbox': list(range(1036, 1040)) + [1749],
+    # КИРИЛЛИЦА
+    'корсары 3': list(range(1370, 1372)) + [1749],
+    # ARDA
+    'arda launcher': list(range(1784, 1787)) + [1749],
+    'arda': list(range(1784, 1787)) + [1749],
 }
+
 
 # ========== ЗАГРУЗКА ДАННЫХ ==========
 def load_data():
@@ -230,14 +259,12 @@ def save_data():
 
 
 def log_action(user_id, action, details=""):
-    """Логирует действие пользователя"""
     action_log.append({
         'user_id': user_id,
         'action': action,
         'details': details,
         'time': datetime.now().isoformat()
     })
-    # Оставляем только последние 1000 записей
     if len(action_log) > 1000:
         action_log.pop(0)
     save_data()
@@ -252,7 +279,6 @@ def is_muted(user_id):
 
 
 def clean_old_orders():
-    """Удаляет заказы старше ORDER_EXPIRE_DAYS дней"""
     now = datetime.now()
     to_remove = []
     for i, order in enumerate(orders):
@@ -271,12 +297,6 @@ def clean_old_orders():
         log_action("system", "clean_orders", f"Удалено {len(to_remove)} старых заказов")
 
 
-def check_and_clean_orders():
-    """Запускает очистку старых заказов при запуске"""
-    clean_old_orders()
-
-
-# ========== ПРОВЕРКИ ==========
 def is_admin(user_id):
     return str(user_id) in admins
 
@@ -305,19 +325,30 @@ def update_like_cooldown(user_id):
     save_data()
 
 
-# ========== ОТПРАВКА ИГР ==========
+# ========== ОТПРАВКА ИГР С БАННЕРОМ ==========
 def send_game_files(chat_id, game_name, user_id=None):
     if game_name not in GAMES_DATABASE:
         return False
 
     file_ids = GAMES_DATABASE[game_name]
     sent_count = 0
+    total = len(file_ids)
 
     bot.send_message(chat_id, f"🎮 *{game_name.upper()}*\n📥 Отправляю...", parse_mode='Markdown')
 
-    for file_id in file_ids:
+    for i, file_id in enumerate(file_ids):
         try:
-            bot.copy_message(chat_id, GAMES_CHANNEL_ID, file_id)
+            if i == total - 1:
+                # Последний файл — отправляем с баннером
+                bot.copy_message(
+                    chat_id=chat_id,
+                    from_chat_id=GAMES_CHANNEL_ID,
+                    message_id=file_id,
+                    caption=BANNER_TEXT,
+                    parse_mode='Markdown'
+                )
+            else:
+                bot.copy_message(chat_id, GAMES_CHANNEL_ID, file_id)
             sent_count += 1
             time.sleep(0.3)
         except:
@@ -358,7 +389,7 @@ def start_cmd(message):
         }
         save_data()
 
-    log_action(user_id, "start", "Пользователь запустил бота")
+    log_action(user_id, "start", "Запуск бота")
 
     text = """🎮 *Ferwes Games*
 
@@ -399,7 +430,7 @@ def help_cmd(message):
         bot.send_message(message.chat.id, "🚫 *Вы заблокированы*")
         return
 
-    log_action(user_id, "help", "Пользователь открыл помощь")
+    log_action(user_id, "help", "Открыл помощь")
 
     text = """📚 *Помощь*
 
@@ -440,7 +471,7 @@ def stats_cmd(message):
         bot.send_message(message.chat.id, "🚫 *Вы заблокированы*")
         return
 
-    log_action(user_id, "stats", "Пользователь посмотрел статистику")
+    log_action(user_id, "stats", "Статистика")
 
     if user_id not in user_stats:
         text = "📊 *У вас пока нет скачиваний*\n\nНапиши название игры, чтобы начать!"
@@ -481,9 +512,8 @@ def history_cmd(message):
         bot.send_message(message.chat.id, "🚫 *Вы заблокированы*")
         return
 
-    log_action(user_id, "history", "Пользователь посмотрел историю")
+    log_action(user_id, "history", "История скачиваний")
 
-    # Собираем историю скачиваний из game_stats
     user_games = []
     for game, stats in game_stats.items():
         if stats.get('downloads', 0) > 0:
@@ -535,7 +565,7 @@ def orders_cmd(message):
         bot.send_message(message.chat.id, "🚫 *Вы заблокированы*")
         return
 
-    log_action(user_id, "orders", "Пользователь открыл стол заказов")
+    log_action(user_id, "orders", "Открыл заказы")
     show_orders_page(message.chat.id, 0, message)
 
 
@@ -607,7 +637,7 @@ def neworder_cmd(message):
         bot.send_message(message.chat.id, "🔇 *Вы не можете создавать заказы*")
         return
 
-    log_action(user_id, "neworder", "Пользователь начал создание заказа")
+    log_action(user_id, "neworder", "Начал создание заказа")
     user_states[message.chat.id] = 'waiting_game'
     bot.send_message(message.chat.id, "📝 *Название игры:*", parse_mode='Markdown')
 
@@ -668,7 +698,7 @@ def myorders_cmd(message):
         bot.send_message(message.chat.id, "🚫 *Вы заблокированы*")
         return
 
-    log_action(user_id, "myorders", "Пользователь посмотрел свои заказы")
+    log_action(user_id, "myorders", "Посмотрел свои заказы")
 
     user_orders = [o for o in orders if o.get('user_id') == message.chat.id]
     if not user_orders:
@@ -692,7 +722,7 @@ def moderator_cmd(message):
     if not is_admin(message.from_user.id) or message.chat.type != 'private':
         return
 
-    log_action(message.from_user.id, "moderator", "Админ открыл панель")
+    log_action(message.from_user.id, "moderator", "Открыл панель")
 
     total_users = len(user_stats)
     total_orders = len(orders)
@@ -988,7 +1018,7 @@ if __name__ == "__main__":
                 json.dump([] if 'orders' in file or file == ACTION_LOG_FILE else {}, f)
 
     load_data()
-    check_and_clean_orders()
+    clean_old_orders()
 
     print(f"🎮 Игр в базе: {len(GAMES_DATABASE)}")
     print(f"📋 Заказов: {len(orders)}")
