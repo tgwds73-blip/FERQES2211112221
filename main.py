@@ -204,6 +204,7 @@ GAMES_DATABASE = {
     'friday night funkin': list(range(748, 750)) + [1749],
     'frostpunk': list(range(1222, 1228)) + [1749],
     'frostpunk 2': list(range(1619, 1627)) + [1749],
+    'forza horizon 5': list(range(1806, 1890)) + [1749],
     # G
     'garrys mod': list(range(858, 860)) + [1749],
     'ghost of tsushima': list(range(1527, 1551)) + [1749],
