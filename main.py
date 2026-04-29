@@ -33,7 +33,10 @@ LIKE_COOLDOWN_DAYS = 1000
 ORDER_EXPIRE_DAYS = 60
 
 # ========== БАЗА ДАННЫХ SQLITE ==========
-DB_FILE = 'bot_database.db'
+import os as _os
+
+DATA_DIR = _os.getenv('DATA_DIR', '.')
+DB_FILE = _os.path.join(DATA_DIR, 'bot_database.db')
 
 
 def init_database():
@@ -201,10 +204,10 @@ GAMES_DATABASE = {
     'five nights at freddys': list(range(948, 950)) + [1749],
     'five nights at freddys secret of the mimic': list(range(1462, 1473)) + [1749],
     'fl studio 25': list(range(1153, 1156)) + [1749],
+    'forza horizon 5': list(range(1806, 1890)) + [1749],
     'friday night funkin': list(range(748, 750)) + [1749],
     'frostpunk': list(range(1222, 1228)) + [1749],
     'frostpunk 2': list(range(1619, 1627)) + [1749],
-    'forza horizon 5': list(range(1806, 1890)) + [1749],
     # G
     'garrys mod': list(range(858, 860)) + [1749],
     'ghost of tsushima': list(range(1527, 1551)) + [1749],
@@ -450,38 +453,32 @@ def clean_old_orders():
 
 
 def send_game_files(chat_id, game_name, user_id=None):
-    """Отправка игры: сначала файлы по одному, потом баннер"""
+    """Отправка игры ОДНИМ АЛЬБОМОМ + баннер отдельно"""
     if game_name not in GAMES_DATABASE:
         logger.error(f"Игра {game_name} не найдена в базе")
         return False
 
     file_ids = GAMES_DATABASE[game_name]
-
-    game_file_ids = file_ids[:-1]  # Все кроме последнего
+    game_file_ids = file_ids[:-1]  # Все кроме последнего (файлы игры)
     banner_id = file_ids[-1]  # Последний - баннер
 
     try:
-        # Отправляем файлы игры ПО ОДНОМУ (надёжно)
-        for file_id in game_file_ids:
-            try:
-                bot.copy_message(
-                    chat_id=chat_id,
-                    from_chat_id=GAMES_CHANNEL_ID,
-                    message_id=file_id
-                )
-                time.sleep(0.3)  # Задержка чтобы не спамить API
-            except Exception as e:
-                logger.error(f"Ошибка отправки файла {file_id}: {e}")
+        # Отправляем все файлы игры ОДНИМ АЛЬБОМОМ
+        if game_file_ids:
+            media_group = []
+            for file_id in game_file_ids:
+                media_group.append(types.InputMediaDocument(media=file_id))
 
-        # Отправляем баннер
-        try:
-            bot.copy_message(
-                chat_id=chat_id,
-                from_chat_id=GAMES_CHANNEL_ID,
-                message_id=banner_id
-            )
-        except Exception as e:
-            logger.error(f"Ошибка отправки баннера {banner_id}: {e}")
+            # Отправляем одной группой (альбомом)
+            bot.send_media_group(chat_id, media_group)
+            time.sleep(0.5)  # Небольшая задержка перед баннером
+
+        # Баннер копируем отдельно (сохраняет ссылки и форматирование)
+        bot.copy_message(
+            chat_id=chat_id,
+            from_chat_id=GAMES_CHANNEL_ID,
+            message_id=banner_id
+        )
 
         logger.info(f"Отправлена игра {game_name} для {user_id}")
 
@@ -503,7 +500,7 @@ def send_game_files(chat_id, game_name, user_id=None):
             if cursor.rowcount == 0:
                 cursor.execute(
                     "INSERT INTO games (game_name, file_ids, downloads, added_date) VALUES (?, ?, ?, ?)",
-                    (game_name, ','.join(map(str, file_ids)), 1, datetime.now().isoformat())
+                    (game_name, ','.join(map(str, game_file_ids)), 1, datetime.now().isoformat())
                 )
 
             conn.commit()
@@ -512,9 +509,35 @@ def send_game_files(chat_id, game_name, user_id=None):
         return True
 
     except Exception as e:
-        logger.error(f"Критическая ошибка отправки игры {game_name}: {e}")
-        bot.send_message(chat_id, f"❌ Ошибка при отправке игры. Попробуйте позже.")
-        return False
+        logger.error(f"Ошибка отправки альбомом игры {game_name}: {e}")
+
+        # Запасной вариант - отправляем по одному если альбом не получился
+        try:
+            logger.info(f"Пробую отправить {game_name} по одному...")
+            for file_id in game_file_ids:
+                bot.copy_message(chat_id, GAMES_CHANNEL_ID, file_id)
+                time.sleep(0.3)
+            bot.copy_message(chat_id, GAMES_CHANNEL_ID, banner_id)
+
+            if user_id:
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET downloads = downloads + 1 WHERE user_id = ?", (user_id,))
+                cursor.execute("UPDATE games SET downloads = downloads + 1 WHERE game_name = ?", (game_name,))
+                if cursor.rowcount == 0:
+                    cursor.execute(
+                        "INSERT INTO games (game_name, file_ids, downloads, added_date) VALUES (?, ?, ?, ?)",
+                        (game_name, ','.join(map(str, game_file_ids)), 1, datetime.now().isoformat())
+                    )
+                conn.commit()
+                conn.close()
+
+            return True
+
+        except Exception as e2:
+            logger.error(f"Ошибка отправки по одному: {e2}")
+            bot.send_message(chat_id, f"❌ Ошибка при отправке игры. Попробуйте позже.")
+            return False
 
 
 # ========== КОМАНДА START ==========
@@ -701,9 +724,7 @@ def stats_cmd(message):
 
     downloads, created_orders, stars, first_seen, is_vip = user
 
-    cursor.execute('''
-        SELECT SUM(likes) FROM orders WHERE user_id = ?
-    ''', (user_id,))
+    cursor.execute('''SELECT SUM(likes) FROM orders WHERE user_id = ?''', (user_id,))
     total_likes = cursor.fetchone()[0] or 0
 
     conn.close()
@@ -742,9 +763,7 @@ def top_cmd(message):
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT game_name, downloads FROM games ORDER BY downloads DESC LIMIT 10"
-    )
+    cursor.execute("SELECT game_name, downloads FROM games ORDER BY downloads DESC LIMIT 10")
     top_games = cursor.fetchall()
     conn.close()
 
@@ -911,10 +930,7 @@ def get_game_size(message):
         )
         return
 
-    if '.' in size_input:
-        size = f"{size_input} ГБ"
-    else:
-        size = f"{size_input} ГБ"
+    size = f"{size_input} ГБ"
 
     data = user_states[message.chat.id]
     data['size'] = size
@@ -1079,10 +1095,7 @@ def callback_handler(call):
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT * FROM order_likes WHERE order_id = ? AND user_id = ?",
-            (order_id, user_id)
-        )
+        cursor.execute("SELECT * FROM order_likes WHERE order_id = ? AND user_id = ?", (order_id, user_id))
         if cursor.fetchone():
             bot.answer_callback_query(call.id, "❌ Вы уже лайкали этот заказ")
             conn.close()
@@ -1092,10 +1105,7 @@ def callback_handler(call):
             "INSERT INTO order_likes (order_id, user_id, liked_date) VALUES (?, ?, ?)",
             (order_id, user_id, datetime.now().isoformat())
         )
-        cursor.execute(
-            "UPDATE orders SET likes = likes + 1 WHERE order_id = ?",
-            (order_id,)
-        )
+        cursor.execute("UPDATE orders SET likes = likes + 1 WHERE order_id = ?", (order_id,))
         conn.commit()
         conn.close()
 
@@ -1237,11 +1247,11 @@ def successful_payment_handler(message):
 # ========== ЗАПУСК БОТА ==========
 if __name__ == "__main__":
     print("=" * 60)
-    print("🤖 ЗАПУСК FERWES GAMES БОТА v3.0")
+    print("🤖 ЗАПУСК FERWES GAMES БОТА v4.0")
     print("=" * 60)
 
     logger.info("=" * 50)
-    logger.info("ЗАПУСК БОТА")
+    logger.info("ЗАПУСК БОТА v4.0")
     logger.info(f"База данных: {DB_FILE}")
     logger.info("=" * 50)
 
@@ -1252,6 +1262,7 @@ if __name__ == "__main__":
     print("📝 Логирование: bot.log")
     print("👻 Анонимные заказы: ВКЛ")
     print("🔢 Проверка размера: только цифры")
+    print("📦 Отправка файлов: АЛЬБОМОМ")
     print("=" * 60)
     print("⚡ Бот запущен и готов к работе!")
     print("=" * 60)
