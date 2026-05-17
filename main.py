@@ -34,10 +34,8 @@ ORDER_EXPIRE_DAYS = 60
 
 # ========== БАЗА ДАННЫХ SQLITE ==========
 import os as _os
-
 DATA_DIR = _os.getenv('DATA_DIR', '.')
 DB_FILE = _os.path.join(DATA_DIR, 'bot_database.db')
-
 
 def init_database():
     """Инициализация базы данных"""
@@ -55,9 +53,7 @@ def init_database():
             first_seen TIMESTAMP,
             last_active TIMESTAMP,
             is_banned BOOLEAN DEFAULT 0,
-            is_muted BOOLEAN DEFAULT 0,
-            is_vip BOOLEAN DEFAULT 0,
-            vip_until TIMESTAMP
+            is_muted BOOLEAN DEFAULT 0
         )
     ''')
 
@@ -137,9 +133,7 @@ def init_database():
     conn.close()
     logger.info("База данных инициализирована")
 
-
 init_database()
-
 
 def init_admin():
     conn = sqlite3.connect(DB_FILE)
@@ -147,7 +141,6 @@ def init_admin():
     cursor.execute("INSERT OR IGNORE INTO admins (user_id) VALUES (?)", (7885915159,))
     conn.commit()
     conn.close()
-
 
 init_admin()
 
@@ -225,6 +218,7 @@ GAMES_DATABASE = {
     'hatred': list(range(1667, 1669)) + [1749],
     'hearts of iron 4': list(range(743, 747)) + [1749],
     'hearts of iron 4: ultimate bundle': list(range(1497, 1501)) + [1749],
+    'hello neighbor 2': list(range(1891, 1896)) + [1749],
     'hitman': list(range(962, 985)) + [1749],
     'hitman blood money': list(range(951, 960)) + [1749],
     'hollow knight': list(range(1060, 1062)) + [1749],
@@ -233,6 +227,8 @@ GAMES_DATABASE = {
     'hotline miami 2': [1159, 1160, 1749],
     'humanit z': list(range(1096, 1110)) + [1749],
     'hytale': list(range(1398, 1402)) + [1749],
+    # I
+    'inscription': [1897, 1898, 1749],
     # J
     'jewel match': list(range(234, 236)) + [1749],
     # K
@@ -267,6 +263,7 @@ GAMES_DATABASE = {
     'portal 2': list(range(1207, 1211)) + [1749],
     'portal knights': list(range(1237, 1239)) + [1749],
     'postal 2': list(range(1615, 1617)) + [1749],
+    'pragmata': list(range(1901, 1920)) + [1749],
     'project zomboid': list(range(1093, 1095)) + [1749],
     'prototype 1': list(range(895, 901)) + [1749],
     'prototype 2': list(range(1044, 1050)) + [1749],
@@ -318,8 +315,13 @@ GAMES_DATABASE = {
 
 user_states = {}
 
-
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
+
+def escape_html(text):
+    """Экранирует HTML-теги в тексте"""
+    if text is None:
+        return ""
+    return str(text).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 def log_action(user_id, action, details=""):
     try:
@@ -334,7 +336,6 @@ def log_action(user_id, action, details=""):
         logger.info(f"User {user_id}: {action} - {details}")
     except Exception as e:
         logger.error(f"Ошибка записи лога: {e}")
-
 
 def get_or_create_user(user_id, username=None, first_name=None):
     conn = sqlite3.connect(DB_FILE)
@@ -360,7 +361,6 @@ def get_or_create_user(user_id, username=None, first_name=None):
     conn.close()
     return True
 
-
 def is_banned(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -368,7 +368,6 @@ def is_banned(user_id):
     result = cursor.fetchone()
     conn.close()
     return result and result[0] == 1
-
 
 def is_muted(user_id):
     conn = sqlite3.connect(DB_FILE)
@@ -378,7 +377,6 @@ def is_muted(user_id):
     conn.close()
     return result and result[0] == 1
 
-
 def is_admin(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -386,22 +384,6 @@ def is_admin(user_id):
     result = cursor.fetchone()
     conn.close()
     return result is not None
-
-
-def is_vip(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT is_vip, vip_until FROM users WHERE user_id = ?", (user_id,))
-    result = cursor.fetchone()
-    conn.close()
-
-    if result and result[0] == 1:
-        if result[1]:
-            vip_until = datetime.fromisoformat(result[1])
-            if vip_until > datetime.now():
-                return True
-    return False
-
 
 def can_like(user_id):
     conn = sqlite3.connect(DB_FILE)
@@ -422,7 +404,6 @@ def can_like(user_id):
         days_left = (next_like - datetime.now()).days
         return False, days_left
 
-
 def update_like_cooldown(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -432,7 +413,6 @@ def update_like_cooldown(user_id):
     )
     conn.commit()
     conn.close()
-
 
 def clean_old_orders():
     """Очистка старых заказов"""
@@ -451,94 +431,58 @@ def clean_old_orders():
     except Exception as e:
         logger.error(f"Ошибка очистки старых заказов: {e}")
 
-
 def send_game_files(chat_id, game_name, user_id=None):
-    """Отправка игры ОДНИМ АЛЬБОМОМ + баннер отдельно"""
+    """Отправка игры файлами из канала (по одному, быстро)"""
     if game_name not in GAMES_DATABASE:
         logger.error(f"Игра {game_name} не найдена в базе")
         return False
 
     file_ids = GAMES_DATABASE[game_name]
-    game_file_ids = file_ids[:-1]  # Все кроме последнего (файлы игры)
-    banner_id = file_ids[-1]  # Последний - баннер
+    game_file_ids = file_ids[:-1]  # Файлы игры
+    banner_id = file_ids[-1]       # Баннер
 
     try:
-        # Отправляем все файлы игры ОДНИМ АЛЬБОМОМ
-        if game_file_ids:
-            media_group = []
-            for file_id in game_file_ids:
-                media_group.append(types.InputMediaDocument(media=file_id))
+        total = len(game_file_ids)
+        for idx, file_id in enumerate(game_file_ids, 1):
+            try:
+                bot.copy_message(
+                    chat_id=chat_id,
+                    from_chat_id=GAMES_CHANNEL_ID,
+                    message_id=file_id
+                )
+                if idx % 5 == 0:
+                    time.sleep(0.3)
+            except Exception as e:
+                logger.error(f"Ошибка отправки файла {file_id}: {e}")
 
-            # Отправляем одной группой (альбомом)
-            bot.send_media_group(chat_id, media_group)
-            time.sleep(0.5)  # Небольшая задержка перед баннером
-
-        # Баннер копируем отдельно (сохраняет ссылки и форматирование)
+        # Баннер
         bot.copy_message(
             chat_id=chat_id,
             from_chat_id=GAMES_CHANNEL_ID,
             message_id=banner_id
         )
 
-        logger.info(f"Отправлена игра {game_name} для {user_id}")
+        logger.info(f"Отправлена игра {game_name} ({total} файлов) для {user_id}")
 
-        # Обновляем статистику
         if user_id:
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
-
-            cursor.execute(
-                "UPDATE users SET downloads = downloads + 1 WHERE user_id = ?",
-                (user_id,)
-            )
-
-            cursor.execute(
-                "UPDATE games SET downloads = downloads + 1 WHERE game_name = ?",
-                (game_name,)
-            )
-
+            cursor.execute("UPDATE users SET downloads = downloads + 1 WHERE user_id = ?", (user_id,))
+            cursor.execute("UPDATE games SET downloads = downloads + 1 WHERE game_name = ?", (game_name,))
             if cursor.rowcount == 0:
                 cursor.execute(
                     "INSERT INTO games (game_name, file_ids, downloads, added_date) VALUES (?, ?, ?, ?)",
                     (game_name, ','.join(map(str, game_file_ids)), 1, datetime.now().isoformat())
                 )
-
             conn.commit()
             conn.close()
 
         return True
 
     except Exception as e:
-        logger.error(f"Ошибка отправки альбомом игры {game_name}: {e}")
-
-        # Запасной вариант - отправляем по одному если альбом не получился
-        try:
-            logger.info(f"Пробую отправить {game_name} по одному...")
-            for file_id in game_file_ids:
-                bot.copy_message(chat_id, GAMES_CHANNEL_ID, file_id)
-                time.sleep(0.3)
-            bot.copy_message(chat_id, GAMES_CHANNEL_ID, banner_id)
-
-            if user_id:
-                conn = sqlite3.connect(DB_FILE)
-                cursor = conn.cursor()
-                cursor.execute("UPDATE users SET downloads = downloads + 1 WHERE user_id = ?", (user_id,))
-                cursor.execute("UPDATE games SET downloads = downloads + 1 WHERE game_name = ?", (game_name,))
-                if cursor.rowcount == 0:
-                    cursor.execute(
-                        "INSERT INTO games (game_name, file_ids, downloads, added_date) VALUES (?, ?, ?, ?)",
-                        (game_name, ','.join(map(str, game_file_ids)), 1, datetime.now().isoformat())
-                    )
-                conn.commit()
-                conn.close()
-
-            return True
-
-        except Exception as e2:
-            logger.error(f"Ошибка отправки по одному: {e2}")
-            bot.send_message(chat_id, f"❌ Ошибка при отправке игры. Попробуйте позже.")
-            return False
-
+        logger.error(f"Критическая ошибка отправки {game_name}: {e}")
+        bot.send_message(chat_id, "❌ Ошибка при отправке игры. Попробуйте позже.")
+        return False
 
 # ========== КОМАНДА START ==========
 @bot.message_handler(commands=['start'])
@@ -562,7 +506,7 @@ def start_cmd(message):
 👤 /myorders — мои заказы
 📊 /stats — статистика
 🔥 /top — топ игр
-💰 /donate — поддержать проект
+💰 /donate — поддержать автора
 
 💡 <i>Нет игры?</i> → /neworder
 ━━━━━━━━━━━━━━━━━━
@@ -580,7 +524,6 @@ def start_cmd(message):
     )
 
     bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
-
 
 # ========== КОМАНДА HELP ==========
 @bot.message_handler(commands=['help'])
@@ -610,14 +553,12 @@ def help_cmd(message):
 /top — топ игр
 
 💰 <b>Поддержка</b>
-/donate — поддержать проект
-/vip — информация о VIP
+/donate — поддержать автора
 
 ━━━━━━━━━━━━━━━━━━
 📢 @FerwesGames | @FerwesGrid"""
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
-
 
 # ========== КОМАНДА DONATE ==========
 @bot.message_handler(commands=['donate'])
@@ -632,16 +573,10 @@ def donate_cmd(message):
 
     show_donate_menu(message.chat.id, user_id)
 
-
 def show_donate_menu(chat_id, user_id):
-    text = """💰 <b>ПОДДЕРЖАТЬ ПРОЕКТ</b>
+    text = """💰 <b>ПОДДЕРЖАТЬ АВТОРА</b>
 
-Вы можете поддержать разработку бота, отправив Telegram Stars. В благодарность вы получите VIP-статус!
-
-<b>VIP-статус даёт:</b>
-✨ Безлимитные скачивания
-✨ Приоритет в заказах
-✨ Специальный значок в профиле
+Если вам нравится бот, вы можете поддержать его развитие звёздами Telegram!
 
 <b>Выберите сумму:</b>"""
 
@@ -654,48 +589,9 @@ def show_donate_menu(chat_id, user_id):
         types.InlineKeyboardButton("💫 500 Stars", callback_data="donate_500"),
         types.InlineKeyboardButton("🌟 1000 Stars", callback_data="donate_1000")
     )
-    markup.add(types.InlineKeyboardButton("ℹ️ О VIP", callback_data="vip_info"))
     markup.add(types.InlineKeyboardButton("« Назад", callback_data="back_to_start"))
 
     bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
-
-
-@bot.message_handler(commands=['vip'])
-def vip_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    user_id = message.from_user.id
-    vip_status = is_vip(user_id)
-
-    if vip_status:
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute("SELECT vip_until, stars_donated FROM users WHERE user_id = ?", (user_id,))
-        result = cursor.fetchone()
-        conn.close()
-
-        text = f"""💎 <b>VIP СТАТУС АКТИВЕН</b>
-
-✨ Статус: Активен
-📅 До: {datetime.fromisoformat(result[0]).strftime('%d.%m.%Y') if result[0] else 'Навсегда'}
-💰 Пожертвовано: {result[1] if result[1] else 0} Stars
-
-Спасибо за поддержку проекта!"""
-    else:
-        text = """💎 <b>VIP СТАТУС</b>
-
-У вас нет активного VIP-статуса.
-
-<b>VIP-статус даёт:</b>
-✨ Безлимитные скачивания
-✨ Приоритет в заказах
-✨ Специальный значок в профиле
-
-Используйте /donate чтобы поддержать проект!"""
-
-    bot.send_message(message.chat.id, text, parse_mode='HTML')
-
 
 # ========== КОМАНДА STATS ==========
 @bot.message_handler(commands=['stats'])
@@ -712,7 +608,7 @@ def stats_cmd(message):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT downloads, created_orders, stars_donated, first_seen, is_vip FROM users WHERE user_id = ?",
+        "SELECT downloads, created_orders, stars_donated, first_seen FROM users WHERE user_id = ?",
         (user_id,)
     )
     user = cursor.fetchone()
@@ -722,7 +618,7 @@ def stats_cmd(message):
         conn.close()
         return
 
-    downloads, created_orders, stars, first_seen, is_vip = user
+    downloads, created_orders, stars, first_seen = user
 
     cursor.execute('''SELECT SUM(likes) FROM orders WHERE user_id = ?''', (user_id,))
     total_likes = cursor.fetchone()[0] or 0
@@ -734,9 +630,7 @@ def stats_cmd(message):
     except:
         days_active = 0
 
-    vip_badge = " 💎 VIP" if is_vip else ""
-
-    text = f"""📊 <b>МОЯ СТАТИСТИКА</b>{vip_badge}
+    text = f"""📊 <b>МОЯ СТАТИСТИКА</b>
 
 🎮 Скачано игр: {downloads}
 📋 Создано заказов: {created_orders}
@@ -745,10 +639,9 @@ def stats_cmd(message):
 📅 Дней в боте: {days_active}
 
 ━━━━━━━━━━━━━━━━━━
-💡 /vip — информация о VIP статусе"""
+💰 /donate — поддержать автора"""
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
-
 
 # ========== КОМАНДА TOP ==========
 @bot.message_handler(commands=['top'])
@@ -771,12 +664,11 @@ def top_cmd(message):
         text = "🔥 <b>ТОП-10 ИГР</b>\n\n"
         for i, (game, downloads) in enumerate(top_games, 1):
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            text += f"{medal} {game} — {downloads} 📥\n"
+            text += f"{medal} {escape_html(game)} — {downloads} 📥\n"
 
         bot.send_message(message.chat.id, text, parse_mode='HTML')
     else:
         bot.send_message(message.chat.id, "📊 Нет данных")
-
 
 # ========== КОМАНДА ORDERS ==========
 @bot.message_handler(commands=['orders'])
@@ -789,10 +681,9 @@ def orders_cmd(message):
         bot.send_message(message.chat.id, "🚫 Вы заблокированы")
         return
 
-    show_orders_page(message.chat.id, 0)
+    show_orders_page(message.chat.id, 0, message.from_user.id)
 
-
-def show_orders_page(chat_id, page=0):
+def show_orders_page(chat_id, page=0, viewer_id=None):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
@@ -806,7 +697,9 @@ def show_orders_page(chat_id, page=0):
     conn.close()
 
     if not all_orders:
-        bot.send_message(chat_id, "📭 Нет активных заказов\n\nСоздайте первый через /neworder")
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
+        bot.send_message(chat_id, "📭 <b>Нет активных заказов</b>\n\nСтаньте первым, кто создаст заказ!", parse_mode='HTML', reply_markup=markup)
         return
 
     orders_per_page = 5
@@ -821,7 +714,9 @@ def show_orders_page(chat_id, page=0):
     end_idx = min(start_idx + orders_per_page, len(all_orders))
     page_orders = all_orders[start_idx:end_idx]
 
-    text = f"📋 <b>ЗАКАЗЫ</b> (Страница {page + 1}/{total_pages})\n\n"
+    text = f"📋 <b>ЗАКАЗЫ</b> ({len(all_orders)} всего)\n"
+    text += f"📄 Страница {page + 1}/{total_pages}\n"
+    text += "━\n"
 
     for order in page_orders:
         order_id, user_id, game_name, size, likes, status, created_date, anonymous, username = order
@@ -831,41 +726,54 @@ def show_orders_page(chat_id, page=0):
         except:
             date_str = "неизвестно"
 
-        status_emoji = "🟢" if status == 'active' else "🔴"
+        status_text = "🟢 Активен" if status == 'active' else "🔴 Завершён"
 
         if anonymous:
-            display_name = "👤 hidden"
+            author = "👤 Аноним"
+        elif username:
+            author = f"👤 @{username}"
         else:
-            display_name = f"👤 @{username}" if username else f"👤 ID:{user_id}"
+            author = f"👤 ID:{user_id}"
 
-        text += f"🎮 <b>{game_name}</b>\n"
-        text += f"{display_name}\n"
-        text += f"📅 {date_str} | 💾 {size}\n"
-        text += f"❤️ {likes} | {status_emoji} активен\n"
-        text += f"🆔 {order_id}\n"
-        text += "─\n"
+        safe_game = escape_html(game_name)
+
+        text += f"<b>#{order_id}</b> | 🎮 {safe_game}\n"
+        text += f"{author} | 💾 {size}\n"
+        text += f"📅 {date_str} | ❤️ {likes} | {status_text}\n"
+        text += "━\n"
 
     markup = types.InlineKeyboardMarkup(row_width=5)
 
     nav_buttons = []
     if page > 0:
-        nav_buttons.append(types.InlineKeyboardButton("⬅️", callback_data=f"orders_page_{page - 1}"))
-    nav_buttons.append(types.InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="current_page"))
+        nav_buttons.append(types.InlineKeyboardButton("⬅️ Назад", callback_data=f"orders_page_{page - 1}"))
+    nav_buttons.append(types.InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="current_page"))
     if page < total_pages - 1:
-        nav_buttons.append(types.InlineKeyboardButton("➡️", callback_data=f"orders_page_{page + 1}"))
+        nav_buttons.append(types.InlineKeyboardButton("Вперёд ➡️", callback_data=f"orders_page_{page + 1}"))
     markup.row(*nav_buttons)
 
+    like_buttons = []
     for order in page_orders[:3]:
-        markup.add(types.InlineKeyboardButton(
-            f"❤️ {order[2][:20]}",
+        short_name = escape_html(order[2][:15])
+        like_buttons.append(types.InlineKeyboardButton(
+            f"❤️ {short_name}",
             callback_data=f"like_{order[0]}"
         ))
+    if like_buttons:
+        markup.row(*like_buttons)
 
-    markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
-    markup.add(types.InlineKeyboardButton("« Назад", callback_data="back_to_start"))
+    markup.add(
+        types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"),
+        types.InlineKeyboardButton("👤 Мои заказы", callback_data="my_orders")
+    )
+    markup.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="back_to_start"))
 
-    bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
-
+    try:
+        bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
+    except Exception as e:
+        logger.error(f"Ошибка парсинга HTML в заказах: {e}")
+        clean_text = re.sub(r'<[^>]+>', '', text)
+        bot.send_message(chat_id, clean_text, reply_markup=markup)
 
 # ========== КОМАНДА NEWORDER ==========
 @bot.message_handler(commands=['neworder'])
@@ -893,9 +801,7 @@ def neworder_cmd(message):
         )
     )
 
-
-@bot.message_handler(
-    func=lambda m: user_states.get(m.chat.id) and user_states[m.chat.id].get('state') == 'waiting_game')
+@bot.message_handler(func=lambda m: user_states.get(m.chat.id) and user_states[m.chat.id].get('state') == 'waiting_game')
 def get_game_name(message):
     if message.chat.type != 'private':
         return
@@ -908,14 +814,11 @@ def get_game_name(message):
 
     bot.send_message(
         message.chat.id,
-        f"🎮 <b>{game_name}</b>\n\nВведите размер игры в ГБ (только цифры):",
+        f"🎮 <b>{escape_html(game_name)}</b>\n\nВведите размер игры в ГБ (только цифры):",
         parse_mode='HTML'
     )
 
-
-@bot.message_handler(
-    func=lambda m: user_states.get(m.chat.id) and isinstance(user_states[m.chat.id], dict) and user_states[
-        m.chat.id].get('state') == 'waiting_size')
+@bot.message_handler(func=lambda m: user_states.get(m.chat.id) and isinstance(user_states[m.chat.id], dict) and user_states[m.chat.id].get('state') == 'waiting_size')
 def get_game_size(message):
     if message.chat.type != 'private':
         return
@@ -931,7 +834,6 @@ def get_game_size(message):
         return
 
     size = f"{size_input} ГБ"
-
     data = user_states[message.chat.id]
     data['size'] = size
     data['state'] = 'waiting_anonymous'
@@ -944,17 +846,19 @@ def get_game_size(message):
 
     bot.send_message(
         message.chat.id,
-        f"🎮 <b>{data['game']}</b>\n💾 Размер: {size}\n\n<b>Опубликовать заказ анонимно?</b>",
+        f"🎮 <b>{escape_html(data['game'])}</b>\n💾 Размер: {size}\n\n<b>Опубликовать заказ анонимно?</b>",
         parse_mode='HTML',
         reply_markup=markup
     )
-
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('anon_'))
 def anonymous_choice(call):
     if call.message.chat.id not in user_states:
         bot.answer_callback_query(call.id, "❌ Сессия истекла")
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         return
 
     data = user_states[call.message.chat.id]
@@ -977,13 +881,16 @@ def anonymous_choice(call):
     conn.close()
 
     del user_states[call.message.chat.id]
-    bot.delete_message(call.message.chat.id, call.message.message_id)
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
 
     anon_text = "👻 Анонимно" if anonymous else "👤 Открыто"
 
     text = f"""✅ <b>ЗАКАЗ #{order_id} СОЗДАН</b>
 
-🎮 Игра: {data['game']}
+🎮 Игра: {escape_html(data['game'])}
 💾 Размер: {data['size']}
 {anon_text}
 📋 Статус: Ожидает
@@ -996,7 +903,6 @@ def anonymous_choice(call):
 
     bot.send_message(call.message.chat.id, text, parse_mode='HTML', reply_markup=markup)
     bot.answer_callback_query(call.id)
-
 
 # ========== КОМАНДА MYORDERS ==========
 @bot.message_handler(commands=['myorders'])
@@ -1019,21 +925,22 @@ def myorders_cmd(message):
     conn.close()
 
     if not user_orders:
-        bot.send_message(message.chat.id, "📭 У вас нет заказов\n\nСоздайте первый через /neworder")
+        text = "👤 <b>МОИ ЗАКАЗЫ</b>\n\n📭 У вас пока нет заказов.\n\nСоздайте первый через /neworder"
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
+        bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
         return
 
-    text = "👤 <b>МОИ ЗАКАЗЫ</b>\n\n"
+    text = f"👤 <b>МОИ ЗАКАЗЫ</b> ({len(user_orders)} шт.)\n\n"
     for order in user_orders:
         order_id, game_name, size, likes, status, created_date, anonymous = order
         status_emoji = "🟢" if status == 'active' else "🔴"
-        anon_badge = " 👻" if anonymous else ""
-        text += f"{status_emoji} <b>{game_name}</b>{anon_badge}\n"
-        text += f"🆔 #{order_id} | 💾 {size}\n"
-        text += f"❤️ {likes}\n"
-        text += "─\n"
+        anon_badge = " 👻 Анонимно" if anonymous else ""
+        text += f"{status_emoji} <b>#{order_id}</b> | 🎮 {escape_html(game_name)}\n"
+        text += f"💾 {size} | ❤️ {likes}{anon_badge}\n"
+        text += "━\n"
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
-
 
 # ========== ПОИСК ИГР ==========
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith('/') and m.chat.type == 'private')
@@ -1047,7 +954,12 @@ def search_handler(message):
     query = message.text.strip().lower()
 
     if query in GAMES_DATABASE:
-        bot.send_message(message.chat.id, f"🎮 <b>{message.text}</b>\n\n⏳ Загружаю файлы...", parse_mode='HTML')
+        total_files = len(GAMES_DATABASE[query]) - 1
+        bot.send_message(
+            message.chat.id,
+            f"🎮 <b>{escape_html(message.text)}</b>\n📦 Файлов: {total_files}\n\n⏳ Загружаю...",
+            parse_mode='HTML'
+        )
         send_game_files(message.chat.id, query, user_id)
         return
 
@@ -1057,7 +969,7 @@ def search_handler(message):
             similar.append(game)
 
     if similar:
-        text = f"❌ <b>'{message.text}' не найдено</b>\n\n🎯 <i>Возможно вы искали:</i>"
+        text = f"❌ <b>'{escape_html(message.text)}' не найдено</b>\n\n🎯 <i>Возможно вы искали:</i>"
         markup = types.InlineKeyboardMarkup(row_width=1)
         for game in similar[:5]:
             markup.add(types.InlineKeyboardButton(
@@ -1068,12 +980,11 @@ def search_handler(message):
 
         bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
     else:
-        text = f"❌ <b>'{message.text}' не найдено</b>\n\n📝 Создайте заказ через /neworder"
+        text = f"❌ <b>'{escape_html(message.text)}' не найдено</b>\n\n📝 Создайте заказ через /neworder"
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
 
         bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
-
 
 # ========== CALLBACK ОБРАБОТЧИК ==========
 @bot.callback_query_handler(func=lambda call: True)
@@ -1112,40 +1023,40 @@ def callback_handler(call):
         update_like_cooldown(user_id)
         bot.answer_callback_query(call.id, "❤️ Лайк поставлен!")
 
-        try:
-            show_orders_page(call.message.chat.id, 0)
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-        except:
-            pass
-
     elif call.data.startswith('play_'):
         game_name = call.data[5:]
         bot.answer_callback_query(call.id, f"⏳ Загружаю {game_name}...")
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         send_game_files(call.message.chat.id, game_name, user_id)
 
     elif call.data.startswith('orders_page_'):
         page = int(call.data.split('_')[2])
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        show_orders_page(call.message.chat.id, page)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
+        show_orders_page(call.message.chat.id, page, user_id)
 
     elif call.data.startswith('donate_'):
         amount = int(call.data.split('_')[1])
 
         prices = {
-            10: [types.LabeledPrice("Поддержка проекта", 10)],
-            50: [types.LabeledPrice("Поддержка проекта", 50)],
-            100: [types.LabeledPrice("Поддержка проекта", 100)],
-            300: [types.LabeledPrice("Поддержка проекта", 300)],
-            500: [types.LabeledPrice("Поддержка проекта", 500)],
-            1000: [types.LabeledPrice("Поддержка проекта", 1000)]
+            10: [types.LabeledPrice("Поддержка автора", 10)],
+            50: [types.LabeledPrice("Поддержка автора", 50)],
+            100: [types.LabeledPrice("Поддержка автора", 100)],
+            300: [types.LabeledPrice("Поддержка автора", 300)],
+            500: [types.LabeledPrice("Поддержка автора", 500)],
+            1000: [types.LabeledPrice("Поддержка автора", 1000)]
         }
 
         try:
             bot.send_invoice(
                 chat_id=call.message.chat.id,
                 title="Поддержка Ferwes Games",
-                description=f"Пожертвование {amount} Stars на развитие бота",
+                description=f"Пожертвование {amount} Stars",
                 invoice_payload=f"donate_{user_id}_{amount}",
                 provider_token="",
                 currency="XTR",
@@ -1157,57 +1068,78 @@ def callback_handler(call):
             bot.answer_callback_query(call.id, "❌ Ошибка создания счёта")
 
     elif call.data == "show_donate":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         show_donate_menu(call.message.chat.id, user_id)
 
-    elif call.data == "vip_info":
-        bot.answer_callback_query(call.id)
-        vip_cmd(call.message)
-
     elif call.data == "show_orders":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         orders_cmd(call.message)
 
     elif call.data == "new_order":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         neworder_cmd(call.message)
 
     elif call.data == "my_orders":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         myorders_cmd(call.message)
 
     elif call.data == "my_stats":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         stats_cmd(call.message)
 
     elif call.data == "show_top":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         top_cmd(call.message)
 
     elif call.data == "show_help":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         help_cmd(call.message)
 
     elif call.data == "back_to_start":
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         start_cmd(call.message)
 
     elif call.data == "cancel_order":
         if call.message.chat.id in user_states:
             del user_states[call.message.chat.id]
-        bot.delete_message(call.message.chat.id, call.message.message_id)
+        try:
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except:
+            pass
         bot.send_message(call.message.chat.id, "❌ Создание заказа отменено")
         start_cmd(call.message)
 
     elif call.data == "current_page":
         bot.answer_callback_query(call.id)
 
-
 # ========== ОБРАБОТЧИК ОПЛАТЫ ==========
 @bot.pre_checkout_query_handler(func=lambda query: True)
 def checkout_handler(pre_checkout_query):
     bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-
 
 @bot.message_handler(content_types=['successful_payment'])
 def successful_payment_handler(message):
@@ -1219,17 +1151,11 @@ def successful_payment_handler(message):
     except:
         amount = 0
 
-    vip_days = (amount // 100) * 30
-    if vip_days == 0:
-        vip_days = 30
-
-    vip_until = (datetime.now() + timedelta(days=vip_days)).isoformat()
-
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE users SET stars_donated = stars_donated + ?, is_vip = 1, vip_until = ? WHERE user_id = ?",
-        (amount, vip_until, user_id)
+        "UPDATE users SET stars_donated = stars_donated + ? WHERE user_id = ?",
+        (amount, user_id)
     )
     conn.commit()
     conn.close()
@@ -1237,21 +1163,19 @@ def successful_payment_handler(message):
     text = f"""✅ <b>СПАСИБО ЗА ПОДДЕРЖКУ!</b>
 
 💰 Оплачено: {amount} Stars
-💎 VIP-статус активирован на {vip_days} дней!
 
-Спасибо, что поддерживаете развитие бота! ❤️"""
+Ваша поддержка помогает развивать бота и добавлять новые игры! ❤️"""
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
-
 
 # ========== ЗАПУСК БОТА ==========
 if __name__ == "__main__":
     print("=" * 60)
-    print("🤖 ЗАПУСК FERWES GAMES БОТА v4.0")
+    print("🤖 ЗАПУСК FERWES GAMES БОТА v7.0")
     print("=" * 60)
 
     logger.info("=" * 50)
-    logger.info("ЗАПУСК БОТА v4.0")
+    logger.info("ЗАПУСК БОТА v7.0")
     logger.info(f"База данных: {DB_FILE}")
     logger.info("=" * 50)
 
@@ -1262,7 +1186,7 @@ if __name__ == "__main__":
     print("📝 Логирование: bot.log")
     print("👻 Анонимные заказы: ВКЛ")
     print("🔢 Проверка размера: только цифры")
-    print("📦 Отправка файлов: АЛЬБОМОМ")
+    print("🛡 Защита от HTML-ошибок: ВКЛ")
     print("=" * 60)
     print("⚡ Бот запущен и готов к работе!")
     print("=" * 60)
