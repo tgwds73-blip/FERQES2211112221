@@ -251,7 +251,7 @@ GAMES_DATABASE = {
     'nier automata': list(range(164, 173)) + [1749],
     'nier replicant': list(range(1670, 1682)) + [1749],
     'no im not a human': list(range(517, 520)) + [1749],
-    'no mans sky': list(range(1751, 1765)) + [1749],
+   'no mans sky': list(range(1751, 1765)) + [1749],
     # O
     'one shot': list(range(1065, 1069)) + [1749],
     'orion sandbox': list(range(814, 816)) + [1749],
@@ -278,7 +278,7 @@ GAMES_DATABASE = {
     'risk of rain 2': list(range(1612, 1614)) + [1749],
     'rock star life simulator': list(range(184, 186)) + [1749],
     # S
-    'stalker shadow of chernobyl': list(range(1326, 1329)) + [1749],
+    'stalker call of pripyat': list(range(1922, 1925)) + [1749],
     'stalker anomaly': list(range(1628, 1634)) + [1749],
     'sally face': list(range(628, 632)) + [1749],
     'scorn': list(range(217, 227)) + [1749],
