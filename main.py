@@ -171,6 +171,7 @@ GAMES_DATABASE = {
     'cry of fear': list(range(1481, 1486)) + [1749],
     'cuphead': list(range(817, 821)) + [1749],
     'cyberpunk 2077': list(range(658, 704)) + [1749],
+    'cybernetic fault': list(range(1938, 1941)) + [1749],
     # D
     'dark souls 3': list(range(880, 894)) + [1749],
     'dead space': list(range(1576, 1580)) + [1749],
@@ -277,6 +278,7 @@ GAMES_DATABASE = {
     'rimworld': list(range(1298, 1301)) + [1749],
     'risk of rain 2': list(range(1612, 1614)) + [1749],
     'rock star life simulator': list(range(184, 186)) + [1749],
+    'rauniot': list(range(1926, 1937)) + [1749],
     # S
     'stalker call of pripyat': list(range(1922, 1925)) + [1749],
     'stalker anomaly': list(range(1628, 1634)) + [1749],
