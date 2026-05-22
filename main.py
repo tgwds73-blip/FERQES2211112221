@@ -184,6 +184,7 @@ GAMES_DATABASE = {
     'dying light: the beast': list(range(1502, 1525)) + [1749],
     # E
     'elden ring': list(range(552, 587)) + [1749],
+    'endoparasitic': [1942, 1943, 1749],
     # F
     'fallout 3': list(range(1231, 1236)) + [1749],
     'fallout 4': list(range(1277, 1296)) + [1749],
@@ -291,6 +292,7 @@ GAMES_DATABASE = {
     'streets of rogue 2': list(range(1041, 1043)) + [1749],
     'system shock 2 remaster': list(range(187, 192)) + [1749],
     'swat 4': list(range(1766, 1769)) + [1749],
+    'subnautica 2': list(range(1945, 1953)) + [1749],
     # T
     'teardown': list(range(906, 912)) + [1749],
     'terraria': list(range(1459, 1461)) + [1749],
