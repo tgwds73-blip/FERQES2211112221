@@ -242,6 +242,7 @@ GAMES_DATABASE = {
     # M
     'mafia 1': list(range(1241, 1243)) + [1749],
     'mafia 2': list(range(942, 947)) + [1749],
+    'mafia: the old country': list(range(1954, 1975)) + [1749],
     'metro 2033': list(range(1051, 1056)) + [1749],
     'metro last light redux': list(range(1606, 1611)) + [1749],
     'minecraft': list(range(932, 935)) + [1749],
@@ -253,7 +254,7 @@ GAMES_DATABASE = {
     'nier automata': list(range(164, 173)) + [1749],
     'nier replicant': list(range(1670, 1682)) + [1749],
     'no im not a human': list(range(517, 520)) + [1749],
-   'no mans sky': list(range(1751, 1765)) + [1749],
+    'no mans sky': list(range(1751, 1765)) + [1749],
     # O
     'one shot': list(range(1065, 1069)) + [1749],
     'orion sandbox': list(range(814, 816)) + [1749],
