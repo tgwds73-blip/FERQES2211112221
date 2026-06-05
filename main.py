@@ -27,10 +27,36 @@ BOT_TOKEN = '8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s'
 bot = telebot.TeleBot(BOT_TOKEN)
 GAMES_CHANNEL_ID = -1003421344618
 
-# Константы
-ORDER_EXPIRE_DAYS = 60
+# ID фото для команд (из канала)
+PHOTO_START = 2005
+PHOTO_HELP = 2006
+PHOTO_ORDERS = 2007
+PHOTO_NEWORDER = 2008
+PHOTO_MYORDERS = 2009
+PHOTO_DONATE = 2010
 
-# ========== БАЗА ДАННЫХ SQLITE ==========
+# Константы
+BAN_DURATIONS = {
+    '1h': timedelta(hours=1),
+    '6h': timedelta(hours=6),
+    '12h': timedelta(hours=12),
+    '1d': timedelta(days=1),
+    '3d': timedelta(days=3),
+    '7d': timedelta(days=7),
+    '30d': timedelta(days=30),
+    'forever': None
+}
+
+MUTE_DURATIONS = {
+    '1h': timedelta(hours=1),
+    '6h': timedelta(hours=6),
+    '12h': timedelta(hours=12),
+    '1d': timedelta(days=1),
+    '3d': timedelta(days=3),
+    '7d': timedelta(days=7)
+}
+
+# ========== БАЗА ДАННЫХ ==========
 DATA_DIR = os.getenv('DATA_DIR', '.')
 DB_FILE = os.path.join(DATA_DIR, 'bot_database.db')
 
@@ -51,9 +77,26 @@ def init_database():
             first_seen TIMESTAMP,
             last_active TIMESTAMP,
             is_banned BOOLEAN DEFAULT 0,
-            is_muted BOOLEAN DEFAULT 0
+            ban_until TIMESTAMP,
+            ban_reason TEXT,
+            is_muted BOOLEAN DEFAULT 0,
+            mute_until TIMESTAMP,
+            mute_reason TEXT
         )
     ''')
+
+    cursor.execute("PRAGMA table_info(users)")
+    columns = [col[1] for col in cursor.fetchall()]
+    if 'ban_until' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN ban_until TIMESTAMP")
+    if 'ban_reason' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN ban_reason TEXT")
+    if 'is_muted' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN is_muted BOOLEAN DEFAULT 0")
+    if 'mute_until' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN mute_until TIMESTAMP")
+    if 'mute_reason' not in columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN mute_reason TEXT")
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS orders (
@@ -147,6 +190,7 @@ GAMES_DATABASE = {
     'assassins creed': list(range(1028, 1033)),
     'artmoney': [1770, 1771],
     'bad cheese': list(range(1651, 1654)),
+    'batman legacy of the dark knight': list(range(1984, 2004)),
     'battlefield 3': list(range(1773, 1784)),
     'BeamNG drive': list(range(861, 873)),
     'beholder': list(range(823, 825)),
@@ -166,6 +210,7 @@ GAMES_DATABASE = {
     'cuphead': list(range(817, 821)),
     'cyberpunk 2077': list(range(658, 705)),
     'cybernetic fault': list(range(1938, 1941)),
+    'dark souls remaster': list(range(1976, 1983)),
     'dark souls 3': list(range(880, 894)),
     'dead space': list(range(1576, 1580)),
     'dead space remake': list(range(1581, 1599)),
@@ -293,6 +338,31 @@ GAMES_DATABASE = {
 
 user_states = {}
 
+# ========== БАННЕР ==========
+BANNER_TEXT = """
+🔥 <b>БЕЗ ВСТРОЕННЫХ ПРОГРАММ ИЛИ ВИРУСОВ</b>
+🔥 <b><a href="https://t.me/FerwesGames">FERWES / GAMES</a></b>
+🔥 <b><a href="https://t.me/addlist/AW1LBTA9xa45NDIy">FERWES / GRID</a></b>
+"""
+
+
+# ========== ФУНКЦИЯ ОТПРАВКИ ФОТО ИЗ КАНАЛА ==========
+def send_channel_photo(chat_id, message_id, caption=None, reply_markup=None, parse_mode='HTML'):
+    """Отправляет фото из канала по message_id"""
+    try:
+        bot.copy_message(
+            chat_id=chat_id,
+            from_chat_id=GAMES_CHANNEL_ID,
+            message_id=message_id,
+            caption=caption,
+            parse_mode=parse_mode,
+            reply_markup=reply_markup
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Ошибка отправки фото {message_id}: {e}")
+        return False
+
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
@@ -338,19 +408,55 @@ def get_or_create_user(user_id, username=None, first_name=None):
 def is_banned(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("SELECT is_banned FROM users WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT is_banned, ban_until FROM users WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
     conn.close()
-    return result and result[0] == 1
+
+    if not result or not result[0]:
+        return False
+
+    if result[1]:
+        ban_until = datetime.fromisoformat(result[1])
+        if datetime.now() > ban_until:
+            unban_user(user_id)
+            return False
+
+    return True
+
+
+def unban_user(user_id):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET is_banned = 0, ban_until = NULL, ban_reason = NULL WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
 
 
 def is_muted(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("SELECT is_muted FROM users WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT is_muted, mute_until FROM users WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
     conn.close()
-    return result and result[0] == 1
+
+    if not result or not result[0]:
+        return False
+
+    if result[1]:
+        mute_until = datetime.fromisoformat(result[1])
+        if datetime.now() > mute_until:
+            unmute_user(user_id)
+            return False
+
+    return True
+
+
+def unmute_user(user_id):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET is_muted = 0, mute_until = NULL, mute_reason = NULL WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
 
 
 def is_admin(user_id):
@@ -363,7 +469,7 @@ def is_admin(user_id):
 
 
 def send_game_files(chat_id, game_name, user_id=None):
-    """Отправка игры файлами из канала"""
+    """Отправка игры файлами из канала с баннером в конце"""
     if game_name not in GAMES_DATABASE:
         logger.error(f"Игра {game_name} не найдена в базе")
         return False
@@ -383,6 +489,14 @@ def send_game_files(chat_id, game_name, user_id=None):
                     time.sleep(0.5)
             except Exception as e:
                 logger.error(f"Ошибка отправки файла {file_id}: {e}")
+
+        # Отправка баннера
+        bot.send_message(
+            chat_id,
+            BANNER_TEXT,
+            parse_mode='HTML',
+            disable_web_page_preview=True
+        )
 
         logger.info(f"Отправлена игра {game_name} ({total} файлов) для {user_id}")
 
@@ -411,24 +525,19 @@ def search_games(query):
     """Улучшенный поиск игр"""
     query = query.lower().strip()
 
-    # Точное совпадение
     if query in GAMES_DATABASE:
         return [query]
 
-    # Поиск по части названия
     results = []
     for game in GAMES_DATABASE:
-        # Проверяем содержит ли запрос название игры или наоборот
         if query in game or game in query:
             results.append(game)
 
-    # Сортировка по релевантности
     results.sort(key=lambda x: len(x))
+    return results[:8]
 
-    return results[:8]  # Максимум 8 результатов
 
-
-# ========== КОМАНДА START ==========
+# ========== КОМАНДА START (с фото) ==========
 @bot.message_handler(commands=['start'])
 def start_cmd(message):
     if message.chat.type != 'private':
@@ -465,10 +574,12 @@ def start_cmd(message):
         types.InlineKeyboardButton("ℹ️ Помощь", callback_data="show_help")
     )
 
-    bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
+    # Отправка фото с подписью
+    if not send_channel_photo(message.chat.id, PHOTO_START, caption=text, reply_markup=markup):
+        bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
 
 
-# ========== КОМАНДА HELP ==========
+# ========== КОМАНДА HELP (с фото) ==========
 @bot.message_handler(commands=['help'])
 def help_cmd(message):
     if message.chat.type != 'private':
@@ -493,16 +604,17 @@ def help_cmd(message):
 /donate — Поддержать развитие бота
 
 <b>Особенности:</b>
-• Можно лайкать заказы других пользователей
-• Доступны анонимные заказы
-• Приоритетные заказы выполняются быстрее
+• Можно лайкать заказы
+• Анонимные заказы
+• Приоритетные заказы
 
 По вопросам: @FerwesGames"""
 
-    bot.send_message(message.chat.id, text, parse_mode='HTML')
+    if not send_channel_photo(message.chat.id, PHOTO_HELP, caption=text):
+        bot.send_message(message.chat.id, text, parse_mode='HTML')
 
 
-# ========== КОМАНДА DONATE ==========
+# ========== КОМАНДА DONATE (с фото) ==========
 @bot.message_handler(commands=['donate'])
 def donate_cmd(message):
     if message.chat.type != 'private':
@@ -532,10 +644,11 @@ def show_donate_menu(chat_id):
     )
     markup.add(types.InlineKeyboardButton("« Назад", callback_data="back_to_start"))
 
-    bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
+    if not send_channel_photo(chat_id, PHOTO_DONATE, caption=text, reply_markup=markup):
+        bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
 
 
-# ========== КОМАНДА ORDERS ==========
+# ========== КОМАНДА ORDERS (с фото) ==========
 @bot.message_handler(commands=['orders'])
 def orders_cmd(message):
     if message.chat.type != 'private':
@@ -566,9 +679,12 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
     conn.close()
 
     if not all_orders:
+        text = "📭 Нет активных заказов\n\nСтаньте первым!"
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
-        bot.send_message(chat_id, "📭 Нет активных заказов\n\nСтаньте первым!", parse_mode='HTML', reply_markup=markup)
+
+        if not send_channel_photo(chat_id, PHOTO_ORDERS, caption=text, reply_markup=markup):
+            bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
         return
 
     orders_per_page = 5
@@ -609,7 +725,6 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
 
     markup = types.InlineKeyboardMarkup(row_width=5)
 
-    # Навигация
     nav_buttons = []
     if page > 0:
         nav_buttons.append(types.InlineKeyboardButton("⬅️", callback_data=f"orders_page_{page - 1}"))
@@ -618,7 +733,6 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
         nav_buttons.append(types.InlineKeyboardButton("➡️", callback_data=f"orders_page_{page + 1}"))
     markup.row(*nav_buttons)
 
-    # Кнопки лайков для всех заказов на странице
     like_buttons = []
     for order in page_orders:
         like_buttons.append(types.InlineKeyboardButton(
@@ -626,7 +740,6 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
             callback_data=f"like_{order[0]}"
         ))
 
-    # Размещаем по 3 кнопки в ряд
     for i in range(0, len(like_buttons), 3):
         markup.row(*like_buttons[i:i + 3])
 
@@ -636,10 +749,11 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
     )
     markup.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="back_to_start"))
 
-    bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
+    if not send_channel_photo(chat_id, PHOTO_ORDERS, caption=text, reply_markup=markup):
+        bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
 
 
-# ========== КОМАНДА NEWORDER ==========
+# ========== КОМАНДА NEWORDER (с фото) ==========
 @bot.message_handler(commands=['neworder'])
 def neworder_cmd(message):
     if message.chat.type != 'private':
@@ -656,14 +770,13 @@ def neworder_cmd(message):
 
     user_states[message.chat.id] = {'state': 'waiting_game'}
 
-    bot.send_message(
-        message.chat.id,
-        "📝 <b>НОВЫЙ ЗАКАЗ</b>\n\nВведите название игры:",
-        parse_mode='HTML',
-        reply_markup=types.InlineKeyboardMarkup().add(
-            types.InlineKeyboardButton("« Отмена", callback_data="cancel_order")
-        )
+    text = "📝 <b>НОВЫЙ ЗАКАЗ</b>\n\nВведите название игры:"
+    markup = types.InlineKeyboardMarkup().add(
+        types.InlineKeyboardButton("« Отмена", callback_data="cancel_order")
     )
+
+    if not send_channel_photo(message.chat.id, PHOTO_NEWORDER, caption=text, reply_markup=markup):
+        bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
 
 
 @bot.message_handler(
@@ -805,7 +918,7 @@ def anonymous_choice(call):
     bot.answer_callback_query(call.id)
 
 
-# ========== КОМАНДА MYORDERS ==========
+# ========== КОМАНДА MYORDERS (с фото) ==========
 @bot.message_handler(commands=['myorders'])
 def myorders_cmd(message):
     if message.chat.type != 'private':
@@ -829,7 +942,9 @@ def myorders_cmd(message):
         text = "👤 <b>МОИ ЗАКАЗЫ</b>\n\nУ вас пока нет заказов.\n\nСоздайте первый через /neworder"
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
-        bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
+
+        if not send_channel_photo(message.chat.id, PHOTO_MYORDERS, caption=text, reply_markup=markup):
+            bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
         return
 
     text = f"👤 <b>МОИ ЗАКАЗЫ</b> ({len(user_orders)})\n\n"
@@ -841,7 +956,8 @@ def myorders_cmd(message):
         text += f"{status_emoji} <b>#{order_id}</b>{priority_emoji} — {game_name}\n"
         text += f"💾 {size} | ❤️ {likes}{anon_badge}\n\n"
 
-    bot.send_message(message.chat.id, text, parse_mode='HTML')
+    if not send_channel_photo(message.chat.id, PHOTO_MYORDERS, caption=text):
+        bot.send_message(message.chat.id, text, parse_mode='HTML')
 
 
 # ========== ПОИСК ИГР ==========
@@ -857,7 +973,6 @@ def search_handler(message):
     results = search_games(query)
 
     if len(results) == 1 and query.lower() == results[0].lower():
-        # Точное совпадение - сразу отправляем
         total_files = len(GAMES_DATABASE[results[0]])
         bot.send_message(
             message.chat.id,
@@ -866,7 +981,6 @@ def search_handler(message):
         )
         send_game_files(message.chat.id, results[0], user_id)
     elif results:
-        # Показываем варианты
         text = f"🔍 <b>Результаты поиска для \"{query}\":</b>\n\n"
         markup = types.InlineKeyboardMarkup(row_width=1)
         for i, game in enumerate(results, 1):
@@ -886,7 +1000,182 @@ def search_handler(message):
         bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
 
 
-# ========== УДАЛЕНИЕ ЗАКАЗОВ (АДМИН) ==========
+# ========== ПАНЕЛЬ МОДЕРАТОРА ==========
+@bot.message_handler(commands=['moderator'])
+def moderator_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    text = """🛡 <b>ПАНЕЛЬ МОДЕРАТОРА</b>
+
+<b>Команды:</b>
+/ban ID время причина — Забанить
+/unban ID — Разбанить
+/mute ID время причина — Замутить
+/unmute ID — Размутить
+/deleteorder ID причина — Удалить заказ
+/users — Список пользователей
+/userinfo ID — Инфо о пользователе
+
+<b>Время бана:</b> 1h, 6h, 12h, 1d, 3d, 7d, 30d, forever
+<b>Время мута:</b> 1h, 6h, 12h, 1d, 3d, 7d"""
+
+    bot.send_message(message.chat.id, text, parse_mode='HTML')
+
+
+# ========== КОМАНДЫ МОДЕРАЦИИ ==========
+@bot.message_handler(commands=['ban'])
+def ban_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    try:
+        parts = message.text.split(maxsplit=3)
+        target_id = int(parts[1])
+        duration = parts[2].lower()
+        reason = parts[3] if len(parts) > 3 else "Без причины"
+    except:
+        bot.send_message(message.chat.id, "❌ Использование: /ban ID время причина\nПример: /ban 123456789 7d Спам")
+        return
+
+    if duration not in BAN_DURATIONS:
+        bot.send_message(message.chat.id, f"❌ Неверное время! Доступно: {', '.join(BAN_DURATIONS.keys())}")
+        return
+
+    ban_duration = BAN_DURATIONS[duration]
+    ban_until = (datetime.now() + ban_duration).isoformat() if ban_duration else None
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET is_banned = 1, ban_until = ?, ban_reason = ? WHERE user_id = ?",
+        (ban_until, reason, target_id)
+    )
+    conn.commit()
+    conn.close()
+
+    duration_text = "Навсегда" if duration == 'forever' else duration
+    bot.send_message(message.chat.id, f"✅ Пользователь {target_id} забанен на {duration_text}\nПричина: {reason}")
+
+    try:
+        bot.send_message(target_id, f"🚫 <b>Вы заблокированы</b>\n\n⏰ Срок: {duration_text}\n📝 Причина: {reason}",
+                         parse_mode='HTML')
+    except:
+        pass
+
+    log_action(user_id, "ban", f"ID: {target_id}, duration: {duration}, reason: {reason}")
+
+
+@bot.message_handler(commands=['unban'])
+def unban_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    try:
+        target_id = int(message.text.split()[1])
+    except:
+        bot.send_message(message.chat.id, "❌ Использование: /unban ID")
+        return
+
+    unban_user(target_id)
+    bot.send_message(message.chat.id, f"✅ Пользователь {target_id} разбанен")
+
+    try:
+        bot.send_message(target_id, "✅ Вы были разблокированы")
+    except:
+        pass
+
+    log_action(user_id, "unban", f"ID: {target_id}")
+
+
+@bot.message_handler(commands=['mute'])
+def mute_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    try:
+        parts = message.text.split(maxsplit=3)
+        target_id = int(parts[1])
+        duration = parts[2].lower()
+        reason = parts[3] if len(parts) > 3 else "Без причины"
+    except:
+        bot.send_message(message.chat.id, "❌ Использование: /mute ID время причина\nПример: /mute 123456789 1d Спам")
+        return
+
+    if duration not in MUTE_DURATIONS:
+        bot.send_message(message.chat.id, f"❌ Неверное время! Доступно: {', '.join(MUTE_DURATIONS.keys())}")
+        return
+
+    mute_duration = MUTE_DURATIONS[duration]
+    mute_until = (datetime.now() + mute_duration).isoformat()
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET is_muted = 1, mute_until = ?, mute_reason = ? WHERE user_id = ?",
+        (mute_until, reason, target_id)
+    )
+    conn.commit()
+    conn.close()
+
+    bot.send_message(message.chat.id, f"✅ Пользователь {target_id} замучен на {duration}\nПричина: {reason}")
+
+    try:
+        bot.send_message(target_id, f"🔇 <b>Вы замучены</b>\n\n⏰ Срок: {duration}\n📝 Причина: {reason}",
+                         parse_mode='HTML')
+    except:
+        pass
+
+    log_action(user_id, "mute", f"ID: {target_id}, duration: {duration}, reason: {reason}")
+
+
+@bot.message_handler(commands=['unmute'])
+def unmute_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    try:
+        target_id = int(message.text.split()[1])
+    except:
+        bot.send_message(message.chat.id, "❌ Использование: /unmute ID")
+        return
+
+    unmute_user(target_id)
+    bot.send_message(message.chat.id, f"✅ Пользователь {target_id} размучен")
+
+    try:
+        bot.send_message(target_id, "✅ Вы были размучены")
+    except:
+        pass
+
+    log_action(user_id, "unmute", f"ID: {target_id}")
+
+
 @bot.message_handler(commands=['deleteorder'])
 def delete_order_cmd(message):
     if message.chat.type != 'private':
@@ -921,7 +1210,6 @@ def delete_order_cmd(message):
     conn.commit()
     conn.close()
 
-    # Уведомление создателю
     try:
         bot.send_message(
             creator_id,
@@ -930,9 +1218,95 @@ def delete_order_cmd(message):
             parse_mode='HTML'
         )
     except:
-        logger.error(f"Не удалось уведомить пользователя {creator_id}")
+        pass
 
     bot.send_message(message.chat.id, f"✅ Заказ #{order_id} удалён")
+    log_action(user_id, "delete_order", f"Order: #{order_id}, reason: {reason}")
+
+
+@bot.message_handler(commands=['users'])
+def users_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT user_id, username, first_name, downloads, is_banned, is_muted FROM users ORDER BY downloads DESC LIMIT 20")
+    users = cursor.fetchall()
+    conn.close()
+
+    text = "👥 <b>ПОЛЬЗОВАТЕЛИ</b> (топ-20)\n\n"
+    for user in users:
+        uid, username, first_name, downloads, banned, muted = user
+        name = f"@{username}" if username else first_name or f"ID:{uid}"
+        badges = "🚫" if banned else "🔇" if muted else ""
+        text += f"{badges} {name} — {downloads} скачиваний\n"
+
+    bot.send_message(message.chat.id, text, parse_mode='HTML')
+
+
+@bot.message_handler(commands=['userinfo'])
+def userinfo_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    try:
+        target_id = int(message.text.split()[1])
+    except:
+        bot.send_message(message.chat.id, "❌ Использование: /userinfo ID")
+        return
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT user_id, username, first_name, downloads, created_orders, stars_donated,
+               first_seen, last_active, is_banned, ban_until, ban_reason, is_muted, mute_until, mute_reason
+        FROM users WHERE user_id = ?
+    """, (target_id,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if not user:
+        bot.send_message(message.chat.id, "❌ Пользователь не найден")
+        return
+
+    (uid, username, first_name, downloads, orders, stars, first_seen, last_active,
+     banned, ban_until, ban_reason, muted, mute_until, mute_reason) = user
+
+    text = f"""👤 <b>ИНФО О ПОЛЬЗОВАТЕЛЕ</b>
+
+🆔 ID: {uid}
+👤 Имя: {first_name or 'Н/Д'}
+📛 Username: @{username or 'Н/Д'}
+
+📊 <b>Статистика:</b>
+🎮 Скачиваний: {downloads}
+📋 Заказов: {orders}
+💰 Донатов: {stars} Stars
+
+📅 Первый вход: {first_seen or 'Н/Д'}
+🕐 Последняя активность: {last_active or 'Н/Д'}
+
+{'🚫 <b>ЗАБАНЕН</b>' if banned else '✅ Не забанен'}
+{f'⏰ До: {ban_until}' if ban_until else ''}
+{f'📝 Причина: {ban_reason}' if ban_reason else ''}
+
+{'🔇 <b>ЗАМУЧЕН</b>' if muted else '✅ Не замучен'}
+{f'⏰ До: {mute_until}' if mute_until else ''}
+{f'📝 Причина: {mute_reason}' if mute_reason else ''}"""
+
+    bot.send_message(message.chat.id, text, parse_mode='HTML')
 
 
 # ========== CALLBACK ОБРАБОТЧИК ==========
@@ -1103,18 +1477,21 @@ def successful_payment_handler(message):
 # ========== ЗАПУСК БОТА ==========
 if __name__ == "__main__":
     print("=" * 50)
-    print("🤖 FERWES GAMES BOT")
+    print("🤖 FERWES GAMES BOT v8.0")
     print("=" * 50)
 
     logger.info("=" * 50)
-    logger.info("ЗАПУСК БОТА")
+    logger.info("ЗАПУСК БОТА v8.0")
     logger.info(f"База данных: {DB_FILE}")
     logger.info(f"Игр в базе: {len(GAMES_DATABASE)}")
+    logger.info("Фото для команд: СТАРТ/ХЕЛП/ОРДЕРС/НЬЮОРДЕР/МАЙОРДЕРС/ДОНАТ")
     logger.info("=" * 50)
 
     print(f"🎮 Игр загружено: {len(GAMES_DATABASE)}")
     print("💾 База данных: SQLite")
     print("📝 Логирование: bot.log")
+    print("🖼 Фото команд: ВКЛ")
+    print("🛡 Панель модератора: /moderator")
     print("=" * 50)
     print("⚡ Бот запущен!")
     print("=" * 50)
