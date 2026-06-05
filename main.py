@@ -3,7 +3,6 @@ from telebot import types
 import sqlite3
 import os
 import time
-import random
 import logging
 import re
 from datetime import datetime, timedelta
@@ -24,18 +23,17 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 # ========== НАСТРОЙКИ БОТА ==========
-BOT_TOKEN = '8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0'
+BOT_TOKEN = '8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s'
 bot = telebot.TeleBot(BOT_TOKEN)
 GAMES_CHANNEL_ID = -1003421344618
 
 # Константы
-LIKE_COOLDOWN_DAYS = 1000
 ORDER_EXPIRE_DAYS = 60
 
 # ========== БАЗА ДАННЫХ SQLITE ==========
-import os as _os
-DATA_DIR = _os.getenv('DATA_DIR', '.')
-DB_FILE = _os.path.join(DATA_DIR, 'bot_database.db')
+DATA_DIR = os.getenv('DATA_DIR', '.')
+DB_FILE = os.path.join(DATA_DIR, 'bot_database.db')
+
 
 def init_database():
     """Инициализация базы данных"""
@@ -65,6 +63,7 @@ def init_database():
             size TEXT,
             likes INTEGER DEFAULT 0,
             status TEXT DEFAULT 'active',
+            priority TEXT DEFAULT 'normal',
             created_date TIMESTAMP,
             anonymous BOOLEAN DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users (user_id)
@@ -75,6 +74,8 @@ def init_database():
     columns = [col[1] for col in cursor.fetchall()]
     if 'anonymous' not in columns:
         cursor.execute("ALTER TABLE orders ADD COLUMN anonymous BOOLEAN DEFAULT 0")
+    if 'priority' not in columns:
+        cursor.execute("ALTER TABLE orders ADD COLUMN priority TEXT DEFAULT 'normal'")
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS order_likes (
@@ -82,13 +83,6 @@ def init_database():
             user_id INTEGER,
             liked_date TIMESTAMP,
             PRIMARY KEY (order_id, user_id)
-        )
-    ''')
-
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS like_cooldowns (
-            user_id INTEGER PRIMARY KEY,
-            last_like TIMESTAMP
         )
     ''')
 
@@ -133,7 +127,9 @@ def init_database():
     conn.close()
     logger.info("База данных инициализирована")
 
+
 init_database()
+
 
 def init_admin():
     conn = sqlite3.connect(DB_FILE)
@@ -142,191 +138,163 @@ def init_admin():
     conn.commit()
     conn.close()
 
+
 init_admin()
 
-# ========== БАЗА ВСЕХ ИГР (ФАЙЛЫ + БАННЕР 1749) ==========
+# ========== БАЗА ВСЕХ ИГР ==========
 GAMES_DATABASE = {
-    # A
-    'antonblast': [913, 914, 1749],
-    'assassins creed': list(range(1028, 1033)) + [1749],
-    'artmoney': [1770, 1771, 1749],
-    # B
-    'bad cheese': list(range(1651, 1654)) + [1749],
-    'battlefield 3': list(range(1773, 1784)) + [1749],
-    'BeamNG drive': list(range(861, 873)) + [1749],
-    'beholder': list(range(823, 825)) + [1749],
-    'bendy and the ink machine': list(range(652, 654)) + [1749],
-    'bioshock remaster': list(range(1070, 1080)) + [1749],
-    'blender': list(range(1306, 1310)) + [1749],
-    'borderlands 2': list(range(776, 782)) + [1749],
-    'bully': list(range(1639, 1642)) + [1749],
-    # C
-    'call of duty modern warfare 2': list(range(1212, 1221)) + [1749],
-    'call of duty ww2': list(range(521, 541)) + [1749],
-    'caves of qud': list(range(655, 657)) + [1749],
-    'chesscraft': list(range(1655, 1657)) + [1749],
-    'clair obscur: expedition 33': list(range(1552, 1575)) + [1749],
-    'construction simulator 4': list(range(1373, 1375)) + [1749],
-    'counter strike 1.6': list(range(1453, 1455)) + [1749],
-    'cry of fear': list(range(1481, 1486)) + [1749],
-    'cuphead': list(range(817, 821)) + [1749],
-    'cyberpunk 2077': list(range(658, 704)) + [1749],
-    'cybernetic fault': list(range(1938, 1941)) + [1749],
-    # D
-    'dark souls 3': list(range(880, 894)) + [1749],
-    'dead space': list(range(1576, 1580)) + [1749],
-    'dead space remake': list(range(1581, 1599)) + [1749],
-    'detroit become human': list(range(1407, 1436)) + [1749],
-    'devil may cry 4': list(range(1244, 1258)) + [1749],
-    'dispatch': list(range(1311, 1320)) + [1749],
-    'distant worlds 2': list(range(1644, 1650)) + [1749],
-    'doom the dark ages': list(range(1706, 1748)) + [1749],
-    'dying light: the beast': list(range(1502, 1525)) + [1749],
-    # E
-    'elden ring': list(range(552, 587)) + [1749],
-    'endoparasitic': [1942, 1943, 1749],
-    # F
-    'fallout 3': list(range(1231, 1236)) + [1749],
-    'fallout 4': list(range(1277, 1296)) + [1749],
-    'far cry': list(range(1658, 1661)) + [1749],
-    'far cry 2': list(range(1662, 1665)) + [1749],
-    'far cry 3': list(range(783, 787)) + [1749],
-    'far cry 4': list(range(1354, 1369)) + [1749],
-    'far cry 5': list(range(242, 254)) + [1749],
-    'farm frenzy': list(range(1456, 1458)) + [1749],
-    'fifa 17': list(range(916, 931)) + [1749],
-    'finding frankie': list(range(622, 626)) + [1749],
-    'five nights at freddys': list(range(948, 950)) + [1749],
-    'five nights at freddys secret of the mimic': list(range(1462, 1473)) + [1749],
-    'fl studio 25': list(range(1153, 1156)) + [1749],
-    'forza horizon 5': list(range(1806, 1890)) + [1749],
-    'friday night funkin': list(range(748, 750)) + [1749],
-    'frostpunk': list(range(1222, 1228)) + [1749],
-    'frostpunk 2': list(range(1619, 1627)) + [1749],
-    # G
-    'garrys mod': list(range(858, 860)) + [1749],
-    'ghost of tsushima': list(range(1527, 1551)) + [1749],
-    'ghostrunner': list(range(1692, 1701)) + [1749],
-    'goat simulator': list(range(618, 621)) + [1749],
-    'god of war': list(range(1787, 1805)) + [1749],
-    'Grand Theft Auto III': list(range(1088, 1090)) + [1749],
-    'Grand Theft Auto IV': list(range(799, 810)) + [1749],
-    'Grand Theft Auto V': list(range(705, 742)) + [1749],
-    'Grand Theft Auto: San Andreas': list(range(1259, 1270)) + [1749],
-    'Grand Theft Auto: Vice City': list(range(1450, 1452)) + [1749],
-    # H
-    'half life 2': list(range(1207, 1211)) + [1749],
-    'hard time 3': list(range(1006, 1009)) + [1749],
-    'hatred': list(range(1667, 1669)) + [1749],
-    'hearts of iron 4': list(range(743, 747)) + [1749],
-    'hearts of iron 4: ultimate bundle': list(range(1497, 1501)) + [1749],
-    'hello neighbor 2': list(range(1891, 1896)) + [1749],
-    'hitman': list(range(962, 985)) + [1749],
-    'hitman blood money': list(range(951, 960)) + [1749],
-    'hollow knight': list(range(1060, 1062)) + [1749],
-    'hollow knight silksong': list(range(1600, 1602)) + [1749],
-    'hotline miami': list(range(1085, 1087)) + [1749],
-    'hotline miami 2': [1159, 1160, 1749],
-    'humanit z': list(range(1096, 1110)) + [1749],
-    'hytale': list(range(1398, 1402)) + [1749],
-    # I
-    'inscription': [1897, 1898, 1749],
-    # J
-    'jewel match': list(range(234, 236)) + [1749],
-    # K
-    'korsary 3': list(range(1370, 1372)) + [1749],
-    # L
-    'left 4 dead 2': list(range(1207, 1211)) + [1749],
-    'little nightmares 3': list(range(174, 182)) + [1749],
-    'lonarpg': list(range(1447, 1449)) + [1749],
-    # M
-    'mafia 1': list(range(1241, 1243)) + [1749],
-    'mafia 2': list(range(942, 947)) + [1749],
-    'mafia: the old country': list(range(1954, 1975)) + [1749],
-    'metro 2033': list(range(1051, 1056)) + [1749],
-    'metro last light redux': list(range(1606, 1611)) + [1749],
-    'minecraft': list(range(932, 935)) + [1749],
-    'my gaming club': list(range(811, 813)) + [1749],
-    'my summer car': list(range(1441, 1443)) + [1749],
-    'my winter car': list(range(1347, 1349)) + [1749],
-    'miside': list(range(1057, 1059)) + [1749],
-    # N
-    'nier automata': list(range(164, 173)) + [1749],
-    'nier replicant': list(range(1670, 1682)) + [1749],
-    'no im not a human': list(range(517, 520)) + [1749],
-    'no mans sky': list(range(1751, 1765)) + [1749],
-    # O
-    'one shot': list(range(1065, 1069)) + [1749],
-    'orion sandbox': list(range(814, 816)) + [1749],
-    # P
-    'palworld': list(range(202, 216)) + [1749],
-    'payday the heist': list(range(876, 879)) + [1749],
-    'people playground': list(range(1603, 1605)) + [1749],
-    'plants vs zombies': list(range(549, 551)) + [1749],
-    'portal 2': list(range(1207, 1211)) + [1749],
-    'portal knights': list(range(1237, 1239)) + [1749],
-    'postal 2': list(range(1615, 1617)) + [1749],
-    'pragmata': list(range(1901, 1920)) + [1749],
-    'project zomboid': list(range(1093, 1095)) + [1749],
-    'prototype 1': list(range(895, 901)) + [1749],
-    'prototype 2': list(range(1044, 1050)) + [1749],
-    # Q
-    'quasimorph': list(range(589, 591)) + [1749],
-    # R
-    'red dead redemption': list(range(542, 548)) + [1749],
-    'red dead redemption 2': list(range(428, 485)) + [1749],
-    'resident evil revelations 2': list(range(788, 798)) + [1749],
-    'resident evil village': list(range(826, 845)) + [1749],
-    'rimworld': list(range(1298, 1301)) + [1749],
-    'risk of rain 2': list(range(1612, 1614)) + [1749],
-    'rock star life simulator': list(range(184, 186)) + [1749],
-    'rauniot': list(range(1926, 1937)) + [1749],
-    # S
-    'stalker call of pripyat': list(range(1922, 1925)) + [1749],
-    'stalker anomaly': list(range(1628, 1634)) + [1749],
-    'sally face': list(range(628, 632)) + [1749],
-    'scorn': list(range(217, 227)) + [1749],
-    'slim rancher': list(range(853, 857)) + [1749],
-    'slime rancher 2': list(range(1323, 1325)) + [1749],
-    'spider man remastered': list(range(486, 516)) + [1749],
-    'stray': list(range(936, 941)) + [1749],
-    'streets of rogue 2': list(range(1041, 1043)) + [1749],
-    'system shock 2 remaster': list(range(187, 192)) + [1749],
-    'swat 4': list(range(1766, 1769)) + [1749],
-    'subnautica 2': list(range(1945, 1953)) + [1749],
-    # T
-    'teardown': list(range(906, 912)) + [1749],
-    'terraria': list(range(1459, 1461)) + [1749],
-    'the forest': list(range(633, 635)) + [1749],
-    'the last of us': list(range(1119, 1152)) + [1749],
-    'the long drive': list(range(1444, 1446)) + [1749],
-    'the spike': list(range(846, 852)) + [1749],
-    'the witcher 3': list(range(986, 1005)) + [1749],
-    'third crisis': list(range(1302, 1305)) + [1749],
-    'tomb raider 2013': list(range(1487, 1496)) + [1749],
-    # U
-    'uber soldier': list(range(197, 201)) + [1749],
-    'undertale': list(range(1376, 1378)) + [1749],
-    # W
-    'warhammer 40000 gladius relics of war': list(range(1702, 1705)) + [1749],
-    'watch dogs 2': list(range(1010, 1027)) + [1749],
-    'witcher 3': list(range(986, 1005)) + [1749],
-    'worldbox': list(range(1036, 1040)) + [1749],
-    # КИРИЛЛИЦА
-    'корсары 3': list(range(1370, 1372)) + [1749],
-    # ДОП
-    'arda launcher': list(range(1784, 1787)) + [1749],
+    'antonblast': [913, 914],
+    'assassins creed': list(range(1028, 1033)),
+    'artmoney': [1770, 1771],
+    'bad cheese': list(range(1651, 1654)),
+    'battlefield 3': list(range(1773, 1784)),
+    'BeamNG drive': list(range(861, 873)),
+    'beholder': list(range(823, 825)),
+    'bendy and the ink machine': list(range(652, 654)),
+    'bioshock remaster': list(range(1070, 1080)),
+    'blender': list(range(1306, 1310)),
+    'borderlands 2': list(range(776, 782)),
+    'bully': list(range(1639, 1642)),
+    'call of duty modern warfare 2': list(range(1212, 1221)),
+    'call of duty ww2': list(range(521, 541)),
+    'caves of qud': list(range(655, 657)),
+    'chesscraft': list(range(1655, 1657)),
+    'clair obscur: expedition 33': list(range(1552, 1575)),
+    'construction simulator 4': list(range(1373, 1375)),
+    'counter strike 1.6': list(range(1453, 1455)),
+    'cry of fear': list(range(1481, 1486)),
+    'cuphead': list(range(817, 821)),
+    'cyberpunk 2077': list(range(658, 705)),
+    'cybernetic fault': list(range(1938, 1941)),
+    'dark souls 3': list(range(880, 894)),
+    'dead space': list(range(1576, 1580)),
+    'dead space remake': list(range(1581, 1599)),
+    'detroit become human': list(range(1407, 1436)),
+    'devil may cry 4': list(range(1244, 1258)),
+    'dispatch': list(range(1311, 1320)),
+    'distant worlds 2': list(range(1644, 1650)),
+    'doom the dark ages': list(range(1706, 1748)),
+    'dying light: the beast': list(range(1502, 1525)),
+    'elden ring': list(range(552, 587)),
+    'endoparasitic': [1942, 1943],
+    'fallout 3': list(range(1231, 1236)),
+    'fallout 4': list(range(1277, 1296)),
+    'far cry': list(range(1658, 1661)),
+    'far cry 2': list(range(1662, 1665)),
+    'far cry 3': list(range(783, 787)),
+    'far cry 4': list(range(1354, 1369)),
+    'far cry 5': list(range(242, 254)),
+    'farm frenzy': list(range(1456, 1458)),
+    'fifa 17': list(range(916, 931)),
+    'finding frankie': list(range(622, 626)),
+    'five nights at freddys': list(range(948, 950)),
+    'five nights at freddys secret of the mimic': list(range(1462, 1473)),
+    'fl studio 25': list(range(1153, 1156)),
+    'forza horizon 5': list(range(1806, 1890)),
+    'friday night funkin': list(range(748, 750)),
+    'frostpunk': list(range(1222, 1228)),
+    'frostpunk 2': list(range(1619, 1627)),
+    'garrys mod': list(range(858, 860)),
+    'ghost of tsushima': list(range(1527, 1551)),
+    'ghostrunner': list(range(1692, 1701)),
+    'goat simulator': list(range(618, 621)),
+    'god of war': list(range(1787, 1805)),
+    'Grand Theft Auto III': list(range(1088, 1090)),
+    'Grand Theft Auto IV': list(range(799, 810)),
+    'Grand Theft Auto V': list(range(705, 742)),
+    'Grand Theft Auto: San Andreas': list(range(1259, 1270)),
+    'Grand Theft Auto: Vice City': list(range(1450, 1452)),
+    'half life 2': list(range(1207, 1211)),
+    'hard time 3': list(range(1006, 1009)),
+    'hatred': list(range(1667, 1669)),
+    'hearts of iron 4': list(range(743, 747)),
+    'hearts of iron 4: ultimate bundle': list(range(1497, 1501)),
+    'hello neighbor 2': list(range(1891, 1896)),
+    'hitman': list(range(962, 985)),
+    'hitman blood money': list(range(951, 960)),
+    'hollow knight': list(range(1060, 1062)),
+    'hollow knight silksong': list(range(1600, 1602)),
+    'hotline miami': list(range(1085, 1087)),
+    'hotline miami 2': [1159, 1160],
+    'humanit z': list(range(1096, 1110)),
+    'hytale': list(range(1398, 1402)),
+    'inscription': [1897],
+    'jewel match': list(range(234, 236)),
+    'korsary 3': list(range(1370, 1372)),
+    'left 4 dead 2': list(range(1207, 1211)),
+    'little nightmares 3': list(range(174, 182)),
+    'lonarpg': list(range(1447, 1449)),
+    'mafia 1': list(range(1241, 1243)),
+    'mafia 2': list(range(942, 947)),
+    'mafia: the old country': list(range(1954, 1975)),
+    'metro 2033': list(range(1051, 1056)),
+    'metro last light redux': list(range(1606, 1611)),
+    'minecraft': list(range(932, 935)),
+    'my gaming club': list(range(811, 813)),
+    'my summer car': list(range(1441, 1443)),
+    'my winter car': list(range(1347, 1349)),
+    'miside': list(range(1057, 1059)),
+    'nier automata': list(range(164, 173)),
+    'nier replicant': list(range(1670, 1682)),
+    'no im not a human': list(range(517, 520)),
+    'no mans sky': list(range(1751, 1765)),
+    'one shot': list(range(1065, 1069)),
+    'orion sandbox': list(range(814, 816)),
+    'palworld': list(range(202, 216)),
+    'payday the heist': list(range(876, 879)),
+    'people playground': list(range(1603, 1605)),
+    'plants vs zombies': list(range(549, 551)),
+    'portal 2': list(range(1207, 1211)),
+    'portal knights': list(range(1237, 1239)),
+    'postal 2': list(range(1615, 1617)),
+    'pragmata': list(range(1901, 1920)),
+    'project zomboid': list(range(1093, 1095)),
+    'prototype 1': list(range(895, 901)),
+    'prototype 2': list(range(1044, 1050)),
+    'quasimorph': list(range(589, 591)),
+    'rauniot': list(range(1926, 1937)),
+    'red dead redemption': list(range(542, 548)),
+    'red dead redemption 2': list(range(428, 485)),
+    'resident evil revelations 2': list(range(788, 798)),
+    'resident evil village': list(range(826, 845)),
+    'rimworld': list(range(1298, 1301)),
+    'risk of rain 2': list(range(1612, 1614)),
+    'rock star life simulator': list(range(184, 186)),
+    'stalker call of pripyat': list(range(1922, 1925)),
+    'stalker anomaly': list(range(1628, 1634)),
+    'stalker shadow of chernobyl': list(range(1326, 1329)),
+    'sally face': list(range(628, 632)),
+    'scorn': list(range(217, 227)),
+    'slim rancher': list(range(853, 857)),
+    'slime rancher 2': list(range(1323, 1325)),
+    'spider man remastered': list(range(486, 516)),
+    'stray': list(range(936, 941)),
+    'streets of rogue 2': list(range(1041, 1043)),
+    'subnautica 2': list(range(1945, 1953)),
+    'system shock 2 remaster': list(range(187, 192)),
+    'swat 4': list(range(1766, 1769)),
+    'teardown': list(range(906, 912)),
+    'terraria': list(range(1459, 1461)),
+    'the forest': list(range(633, 635)),
+    'the last of us': list(range(1119, 1152)),
+    'the long drive': list(range(1444, 1446)),
+    'the spike': list(range(846, 852)),
+    'the witcher 3': list(range(986, 1005)),
+    'third crisis': list(range(1302, 1305)),
+    'tomb raider 2013': list(range(1487, 1496)),
+    'uber soldier': list(range(197, 201)),
+    'undertale': list(range(1376, 1378)),
+    'warhammer 40000 gladius relics of war': list(range(1702, 1705)),
+    'watch dogs 2': list(range(1010, 1027)),
+    'worldbox': list(range(1036, 1040)),
+    'корсары 3': list(range(1370, 1372)),
+    'arda launcher': list(range(1784, 1787)),
 }
 
 user_states = {}
 
-# ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
-def escape_html(text):
-    """Экранирует HTML-теги в тексте"""
-    if text is None:
-        return ""
-    return str(text).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+# ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
 def log_action(user_id, action, details=""):
     try:
@@ -338,9 +306,9 @@ def log_action(user_id, action, details=""):
         )
         conn.commit()
         conn.close()
-        logger.info(f"User {user_id}: {action} - {details}")
     except Exception as e:
         logger.error(f"Ошибка записи лога: {e}")
+
 
 def get_or_create_user(user_id, username=None, first_name=None):
     conn = sqlite3.connect(DB_FILE)
@@ -366,6 +334,7 @@ def get_or_create_user(user_id, username=None, first_name=None):
     conn.close()
     return True
 
+
 def is_banned(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -373,6 +342,7 @@ def is_banned(user_id):
     result = cursor.fetchone()
     conn.close()
     return result and result[0] == 1
+
 
 def is_muted(user_id):
     conn = sqlite3.connect(DB_FILE)
@@ -382,6 +352,7 @@ def is_muted(user_id):
     conn.close()
     return result and result[0] == 1
 
+
 def is_admin(user_id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -390,82 +361,28 @@ def is_admin(user_id):
     conn.close()
     return result is not None
 
-def can_like(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT last_like FROM like_cooldowns WHERE user_id = ?", (user_id,))
-    result = cursor.fetchone()
-    conn.close()
-
-    if not result:
-        return True, None
-
-    last_like = datetime.fromisoformat(result[0])
-    next_like = last_like + timedelta(days=LIKE_COOLDOWN_DAYS)
-
-    if datetime.now() >= next_like:
-        return True, None
-    else:
-        days_left = (next_like - datetime.now()).days
-        return False, days_left
-
-def update_like_cooldown(user_id):
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT OR REPLACE INTO like_cooldowns (user_id, last_like) VALUES (?, ?)",
-        (user_id, datetime.now().isoformat())
-    )
-    conn.commit()
-    conn.close()
-
-def clean_old_orders():
-    """Очистка старых заказов"""
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        expire_date = (datetime.now() - timedelta(days=ORDER_EXPIRE_DAYS)).isoformat()
-        cursor.execute("DELETE FROM orders WHERE created_date < ?", (expire_date,))
-        deleted = cursor.rowcount
-        conn.commit()
-        conn.close()
-
-        if deleted > 0:
-            logger.info(f"Удалено {deleted} старых заказов")
-            log_action("system", "clean_orders", f"Удалено {deleted} старых заказов")
-    except Exception as e:
-        logger.error(f"Ошибка очистки старых заказов: {e}")
 
 def send_game_files(chat_id, game_name, user_id=None):
-    """Отправка игры файлами из канала (по одному, быстро)"""
+    """Отправка игры файлами из канала"""
     if game_name not in GAMES_DATABASE:
         logger.error(f"Игра {game_name} не найдена в базе")
         return False
 
     file_ids = GAMES_DATABASE[game_name]
-    game_file_ids = file_ids[:-1]  # Файлы игры
-    banner_id = file_ids[-1]       # Баннер
 
     try:
-        total = len(game_file_ids)
-        for idx, file_id in enumerate(game_file_ids, 1):
+        total = len(file_ids)
+        for idx, file_id in enumerate(file_ids, 1):
             try:
                 bot.copy_message(
                     chat_id=chat_id,
                     from_chat_id=GAMES_CHANNEL_ID,
                     message_id=file_id
                 )
-                if idx % 5 == 0:
-                    time.sleep(0.3)
+                if idx % 10 == 0:
+                    time.sleep(0.5)
             except Exception as e:
                 logger.error(f"Ошибка отправки файла {file_id}: {e}")
-
-        # Баннер
-        bot.copy_message(
-            chat_id=chat_id,
-            from_chat_id=GAMES_CHANNEL_ID,
-            message_id=banner_id
-        )
 
         logger.info(f"Отправлена игра {game_name} ({total} файлов) для {user_id}")
 
@@ -477,7 +394,7 @@ def send_game_files(chat_id, game_name, user_id=None):
             if cursor.rowcount == 0:
                 cursor.execute(
                     "INSERT INTO games (game_name, file_ids, downloads, added_date) VALUES (?, ?, ?, ?)",
-                    (game_name, ','.join(map(str, game_file_ids)), 1, datetime.now().isoformat())
+                    (game_name, ','.join(map(str, file_ids)), 1, datetime.now().isoformat())
                 )
             conn.commit()
             conn.close()
@@ -488,6 +405,28 @@ def send_game_files(chat_id, game_name, user_id=None):
         logger.error(f"Критическая ошибка отправки {game_name}: {e}")
         bot.send_message(chat_id, "❌ Ошибка при отправке игры. Попробуйте позже.")
         return False
+
+
+def search_games(query):
+    """Улучшенный поиск игр"""
+    query = query.lower().strip()
+
+    # Точное совпадение
+    if query in GAMES_DATABASE:
+        return [query]
+
+    # Поиск по части названия
+    results = []
+    for game in GAMES_DATABASE:
+        # Проверяем содержит ли запрос название игры или наоборот
+        if query in game or game in query:
+            results.append(game)
+
+    # Сортировка по релевантности
+    results.sort(key=lambda x: len(x))
+
+    return results[:8]  # Максимум 8 результатов
+
 
 # ========== КОМАНДА START ==========
 @bot.message_handler(commands=['start'])
@@ -504,31 +443,30 @@ def start_cmd(message):
 
     log_action(user.id, "start", "Запуск бота")
 
-    text = """🔍 <b>Напиши название игры</b> — я найду и отправлю.
+    text = """🎮 <b>FERWES GAMES</b>
 
-📋 /orders — заказы
-📝 /neworder — создать заказ
-👤 /myorders — мои заказы
-📊 /stats — статистика
-🔥 /top — топ игр
-💰 /donate — поддержать автора
+Привет! Я бот для скачивания игр. Просто напиши название игры, и я отправлю тебе файлы.
 
-💡 <i>Нет игры?</i> → /neworder
-━━━━━━━━━━━━━━━━━━
-📢 @FerwesGames | ❓ /help"""
+📋 <b>Команды:</b>
+/orders — Стол заказов
+/neworder — Создать заказ
+/myorders — Мои заказы
+/donate — Поддержать
+/help — Помощь
+
+💡 <i>Нет нужной игры?</i> Создай заказ через /neworder"""
 
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
         types.InlineKeyboardButton("📋 Заказы", callback_data="show_orders"),
         types.InlineKeyboardButton("📝 Новый заказ", callback_data="new_order"),
         types.InlineKeyboardButton("👤 Мои заказы", callback_data="my_orders"),
-        types.InlineKeyboardButton("📊 Статистика", callback_data="my_stats"),
-        types.InlineKeyboardButton("🔥 Топ игр", callback_data="show_top"),
         types.InlineKeyboardButton("💰 Поддержать", callback_data="show_donate"),
         types.InlineKeyboardButton("ℹ️ Помощь", callback_data="show_help")
     )
 
     bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
+
 
 # ========== КОМАНДА HELP ==========
 @bot.message_handler(commands=['help'])
@@ -541,29 +479,28 @@ def help_cmd(message):
         bot.send_message(message.chat.id, "🚫 Вы заблокированы")
         return
 
-    text = """━━━━━━━━━━━━━━━━━━
-<b>📋 КОМАНДЫ БОТА</b>
-━━━━━━━━━━━━━━━━━━
+    text = """ℹ️ <b>ПОМОЩЬ</b>
 
 🔍 <b>Поиск игр</b>
-Просто напиши название игры
+Просто напиши название игры в чат. Бот найдет её и отправит файлы.
 
 📋 <b>Заказы</b>
-/orders — все заказы
-/neworder — создать заказ
-/myorders — мои заказы
+/orders — Просмотр всех заказов
+/neworder — Создать новый заказ
+/myorders — Посмотреть свои заказы
 
-📊 <b>Статистика</b>
-/stats — моя статистика
-/top — топ игр
+💰 <b>Донат</b>
+/donate — Поддержать развитие бота
 
-💰 <b>Поддержка</b>
-/donate — поддержать автора
+<b>Особенности:</b>
+• Можно лайкать заказы других пользователей
+• Доступны анонимные заказы
+• Приоритетные заказы выполняются быстрее
 
-━━━━━━━━━━━━━━━━━━
-📢 @FerwesGames | @FerwesGrid"""
+По вопросам: @FerwesGames"""
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
+
 
 # ========== КОМАНДА DONATE ==========
 @bot.message_handler(commands=['donate'])
@@ -576,104 +513,27 @@ def donate_cmd(message):
         bot.send_message(message.chat.id, "🚫 Вы заблокированы")
         return
 
-    show_donate_menu(message.chat.id, user_id)
+    show_donate_menu(message.chat.id)
 
-def show_donate_menu(chat_id, user_id):
-    text = """💰 <b>ПОДДЕРЖАТЬ АВТОРА</b>
 
-Если вам нравится бот, вы можете поддержать его развитие звёздами Telegram!
+def show_donate_menu(chat_id):
+    text = """💰 <b>ПОДДЕРЖАТЬ БОТА</b>
 
-<b>Выберите сумму:</b>"""
+Выберите сумму пожертвования:"""
 
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup = types.InlineKeyboardMarkup(row_width=3)
     markup.add(
-        types.InlineKeyboardButton("⭐ 10 Stars", callback_data="donate_10"),
-        types.InlineKeyboardButton("⭐ 50 Stars", callback_data="donate_50"),
-        types.InlineKeyboardButton("⭐ 100 Stars", callback_data="donate_100"),
-        types.InlineKeyboardButton("⭐ 300 Stars", callback_data="donate_300"),
-        types.InlineKeyboardButton("💫 500 Stars", callback_data="donate_500"),
-        types.InlineKeyboardButton("🌟 1000 Stars", callback_data="donate_1000")
+        types.InlineKeyboardButton("⭐ 10", callback_data="donate_10"),
+        types.InlineKeyboardButton("⭐ 20", callback_data="donate_20"),
+        types.InlineKeyboardButton("⭐ 30", callback_data="donate_30"),
+        types.InlineKeyboardButton("⭐ 40", callback_data="donate_40"),
+        types.InlineKeyboardButton("⭐ 50", callback_data="donate_50"),
+        types.InlineKeyboardButton("⭐ 100", callback_data="donate_100")
     )
     markup.add(types.InlineKeyboardButton("« Назад", callback_data="back_to_start"))
 
     bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
 
-# ========== КОМАНДА STATS ==========
-@bot.message_handler(commands=['stats'])
-def stats_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    user_id = message.from_user.id
-    if is_banned(user_id):
-        bot.send_message(message.chat.id, "🚫 Вы заблокированы")
-        return
-
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT downloads, created_orders, stars_donated, first_seen FROM users WHERE user_id = ?",
-        (user_id,)
-    )
-    user = cursor.fetchone()
-
-    if not user:
-        bot.send_message(message.chat.id, "📊 У вас пока нет скачиваний\n\nНапиши название игры, чтобы начать!")
-        conn.close()
-        return
-
-    downloads, created_orders, stars, first_seen = user
-
-    cursor.execute('''SELECT SUM(likes) FROM orders WHERE user_id = ?''', (user_id,))
-    total_likes = cursor.fetchone()[0] or 0
-
-    conn.close()
-
-    try:
-        days_active = (datetime.now() - datetime.fromisoformat(first_seen)).days
-    except:
-        days_active = 0
-
-    text = f"""📊 <b>МОЯ СТАТИСТИКА</b>
-
-🎮 Скачано игр: {downloads}
-📋 Создано заказов: {created_orders}
-❤️ Получено лайков: {total_likes}
-💰 Пожертвовано Stars: {stars}
-📅 Дней в боте: {days_active}
-
-━━━━━━━━━━━━━━━━━━
-💰 /donate — поддержать автора"""
-
-    bot.send_message(message.chat.id, text, parse_mode='HTML')
-
-# ========== КОМАНДА TOP ==========
-@bot.message_handler(commands=['top'])
-def top_cmd(message):
-    if message.chat.type != 'private':
-        return
-
-    user_id = message.from_user.id
-    if is_banned(user_id):
-        bot.send_message(message.chat.id, "🚫 Вы заблокированы")
-        return
-
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT game_name, downloads FROM games ORDER BY downloads DESC LIMIT 10")
-    top_games = cursor.fetchall()
-    conn.close()
-
-    if top_games:
-        text = "🔥 <b>ТОП-10 ИГР</b>\n\n"
-        for i, (game, downloads) in enumerate(top_games, 1):
-            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
-            text += f"{medal} {escape_html(game)} — {downloads} 📥\n"
-
-        bot.send_message(message.chat.id, text, parse_mode='HTML')
-    else:
-        bot.send_message(message.chat.id, "📊 Нет данных")
 
 # ========== КОМАНДА ORDERS ==========
 @bot.message_handler(commands=['orders'])
@@ -686,17 +546,21 @@ def orders_cmd(message):
         bot.send_message(message.chat.id, "🚫 Вы заблокированы")
         return
 
-    show_orders_page(message.chat.id, 0, message.from_user.id)
+    show_orders_page(message.chat.id, 0, user_id)
+
 
 def show_orders_page(chat_id, page=0, viewer_id=None):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT o.order_id, o.user_id, o.game_name, o.size, o.likes, o.status, o.created_date, o.anonymous, u.username 
+        SELECT o.order_id, o.user_id, o.game_name, o.size, o.likes, o.status, o.created_date, 
+               o.anonymous, o.priority, u.username 
         FROM orders o 
         LEFT JOIN users u ON o.user_id = u.user_id 
         WHERE o.status = 'active' 
-        ORDER BY o.created_date DESC
+        ORDER BY 
+            CASE o.priority WHEN 'urgent' THEN 0 ELSE 1 END,
+            o.created_date DESC
     """)
     all_orders = cursor.fetchall()
     conn.close()
@@ -704,7 +568,7 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
     if not all_orders:
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
-        bot.send_message(chat_id, "📭 <b>Нет активных заказов</b>\n\nСтаньте первым, кто создаст заказ!", parse_mode='HTML', reply_markup=markup)
+        bot.send_message(chat_id, "📭 Нет активных заказов\n\nСтаньте первым!", parse_mode='HTML', reply_markup=markup)
         return
 
     orders_per_page = 5
@@ -719,53 +583,52 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
     end_idx = min(start_idx + orders_per_page, len(all_orders))
     page_orders = all_orders[start_idx:end_idx]
 
-    text = f"📋 <b>ЗАКАЗЫ</b> ({len(all_orders)} всего)\n"
-    text += f"📄 Страница {page + 1}/{total_pages}\n"
-    text += "━\n"
+    text = f"📋 <b>ЗАКАЗЫ</b> ({len(all_orders)})\n"
+    text += f"Страница {page + 1}/{total_pages}\n\n"
 
     for order in page_orders:
-        order_id, user_id, game_name, size, likes, status, created_date, anonymous, username = order
+        order_id, user_id, game_name, size, likes, status, created_date, anonymous, priority, username = order
 
         try:
             date_str = datetime.fromisoformat(created_date).strftime("%d.%m.%Y")
         except:
             date_str = "неизвестно"
 
-        status_text = "🟢 Активен" if status == 'active' else "🔴 Завершён"
+        priority_emoji = "🔴" if priority == 'urgent' else "🟢"
 
         if anonymous:
-            author = "👤 Аноним"
+            author = "Аноним"
         elif username:
-            author = f"👤 @{username}"
+            author = f"@{username}"
         else:
-            author = f"👤 ID:{user_id}"
+            author = f"ID:{user_id}"
 
-        safe_game = escape_html(game_name)
-
-        text += f"<b>#{order_id}</b> | 🎮 {safe_game}\n"
-        text += f"{author} | 💾 {size}\n"
-        text += f"📅 {date_str} | ❤️ {likes} | {status_text}\n"
-        text += "━\n"
+        text += f"{priority_emoji} <b>#{order_id}</b> — {game_name}\n"
+        text += f"👤 {author} | 💾 {size} | ❤️ {likes}\n"
+        text += f"📅 {date_str}\n\n"
 
     markup = types.InlineKeyboardMarkup(row_width=5)
 
+    # Навигация
     nav_buttons = []
     if page > 0:
-        nav_buttons.append(types.InlineKeyboardButton("⬅️ Назад", callback_data=f"orders_page_{page - 1}"))
-    nav_buttons.append(types.InlineKeyboardButton(f"📄 {page + 1}/{total_pages}", callback_data="current_page"))
+        nav_buttons.append(types.InlineKeyboardButton("⬅️", callback_data=f"orders_page_{page - 1}"))
+    nav_buttons.append(types.InlineKeyboardButton(f"{page + 1}/{total_pages}", callback_data="current_page"))
     if page < total_pages - 1:
-        nav_buttons.append(types.InlineKeyboardButton("Вперёд ➡️", callback_data=f"orders_page_{page + 1}"))
+        nav_buttons.append(types.InlineKeyboardButton("➡️", callback_data=f"orders_page_{page + 1}"))
     markup.row(*nav_buttons)
 
+    # Кнопки лайков для всех заказов на странице
     like_buttons = []
-    for order in page_orders[:3]:
-        short_name = escape_html(order[2][:15])
+    for order in page_orders:
         like_buttons.append(types.InlineKeyboardButton(
-            f"❤️ {short_name}",
+            f"❤️ #{order[0]}",
             callback_data=f"like_{order[0]}"
         ))
-    if like_buttons:
-        markup.row(*like_buttons)
+
+    # Размещаем по 3 кнопки в ряд
+    for i in range(0, len(like_buttons), 3):
+        markup.row(*like_buttons[i:i + 3])
 
     markup.add(
         types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"),
@@ -773,12 +636,8 @@ def show_orders_page(chat_id, page=0, viewer_id=None):
     )
     markup.add(types.InlineKeyboardButton("🏠 Главное меню", callback_data="back_to_start"))
 
-    try:
-        bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
-    except Exception as e:
-        logger.error(f"Ошибка парсинга HTML в заказах: {e}")
-        clean_text = re.sub(r'<[^>]+>', '', text)
-        bot.send_message(chat_id, clean_text, reply_markup=markup)
+    bot.send_message(chat_id, text, parse_mode='HTML', reply_markup=markup)
+
 
 # ========== КОМАНДА NEWORDER ==========
 @bot.message_handler(commands=['neworder'])
@@ -806,7 +665,9 @@ def neworder_cmd(message):
         )
     )
 
-@bot.message_handler(func=lambda m: user_states.get(m.chat.id) and user_states[m.chat.id].get('state') == 'waiting_game')
+
+@bot.message_handler(
+    func=lambda m: user_states.get(m.chat.id) and user_states[m.chat.id].get('state') == 'waiting_game')
 def get_game_name(message):
     if message.chat.type != 'private':
         return
@@ -819,11 +680,14 @@ def get_game_name(message):
 
     bot.send_message(
         message.chat.id,
-        f"🎮 <b>{escape_html(game_name)}</b>\n\nВведите размер игры в ГБ (только цифры):",
+        f"🎮 Игра: {game_name}\n\nВведите размер в ГБ (только цифры):",
         parse_mode='HTML'
     )
 
-@bot.message_handler(func=lambda m: user_states.get(m.chat.id) and isinstance(user_states[m.chat.id], dict) and user_states[m.chat.id].get('state') == 'waiting_size')
+
+@bot.message_handler(
+    func=lambda m: user_states.get(m.chat.id) and isinstance(user_states[m.chat.id], dict) and user_states[
+        m.chat.id].get('state') == 'waiting_size')
 def get_game_size(message):
     if message.chat.type != 'private':
         return
@@ -833,7 +697,7 @@ def get_game_size(message):
     if not re.match(r'^[\d.]+$', size_input):
         bot.send_message(
             message.chat.id,
-            "❌ <b>Ошибка!</b>\n\nРазмер должен содержать только цифры!\nНапример: 50 или 12.5\n\nПопробуйте ещё раз:",
+            "❌ Размер должен содержать только цифры!\nНапример: 50 или 12.5\n\nПопробуйте ещё раз:",
             parse_mode='HTML'
         )
         return
@@ -841,6 +705,31 @@ def get_game_size(message):
     size = f"{size_input} ГБ"
     data = user_states[message.chat.id]
     data['size'] = size
+    data['state'] = 'waiting_priority'
+
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        types.InlineKeyboardButton("🟢 Обычный", callback_data="priority_normal"),
+        types.InlineKeyboardButton("🔴 Срочный", callback_data="priority_urgent")
+    )
+
+    bot.send_message(
+        message.chat.id,
+        f"🎮 Игра: {data['game']}\n💾 Размер: {size}\n\n<b>Выберите приоритет:</b>",
+        parse_mode='HTML',
+        reply_markup=markup
+    )
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('priority_'))
+def priority_choice(call):
+    if call.message.chat.id not in user_states:
+        bot.answer_callback_query(call.id, "❌ Сессия истекла")
+        return
+
+    data = user_states[call.message.chat.id]
+    priority = call.data.split('_')[1]
+    data['priority'] = priority
     data['state'] = 'waiting_anonymous'
 
     markup = types.InlineKeyboardMarkup(row_width=2)
@@ -849,21 +738,24 @@ def get_game_size(message):
         types.InlineKeyboardButton("👻 Анонимно", callback_data="anon_yes")
     )
 
-    bot.send_message(
-        message.chat.id,
-        f"🎮 <b>{escape_html(data['game'])}</b>\n💾 Размер: {size}\n\n<b>Опубликовать заказ анонимно?</b>",
-        parse_mode='HTML',
-        reply_markup=markup
-    )
+    try:
+        bot.edit_message_text(
+            f"🎮 Игра: {data['game']}\n💾 Размер: {data['size']}\n{'🔴 Срочный' if priority == 'urgent' else '🟢 Обычный'}\n\n<b>Опубликовать анонимно?</b>",
+            call.message.chat.id,
+            call.message.message_id,
+            parse_mode='HTML',
+            reply_markup=markup
+        )
+    except:
+        pass
+
+    bot.answer_callback_query(call.id)
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('anon_'))
 def anonymous_choice(call):
     if call.message.chat.id not in user_states:
         bot.answer_callback_query(call.id, "❌ Сессия истекла")
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-        except:
-            pass
         return
 
     data = user_states[call.message.chat.id]
@@ -873,9 +765,10 @@ def anonymous_choice(call):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO orders (user_id, game_name, size, created_date, anonymous)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (user_id, data['game'], data['size'], datetime.now().isoformat(), 1 if anonymous else 0))
+        INSERT INTO orders (user_id, game_name, size, created_date, anonymous, priority)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (user_id, data['game'], data['size'], datetime.now().isoformat(), 1 if anonymous else 0,
+          data.get('priority', 'normal')))
     order_id = cursor.lastrowid
 
     cursor.execute(
@@ -886,19 +779,21 @@ def anonymous_choice(call):
     conn.close()
 
     del user_states[call.message.chat.id]
+
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
     except:
         pass
 
-    anon_text = "👻 Анонимно" if anonymous else "👤 Открыто"
+    anon_text = "Анонимно" if anonymous else "Открыто"
+    priority_text = "Срочный" if data.get('priority') == 'urgent' else "Обычный"
 
     text = f"""✅ <b>ЗАКАЗ #{order_id} СОЗДАН</b>
 
-🎮 Игра: {escape_html(data['game'])}
+🎮 Игра: {data['game']}
 💾 Размер: {data['size']}
-{anon_text}
-📋 Статус: Ожидает
+🔴 Приоритет: {priority_text}
+👤 {anon_text}
 
 Спасибо за заказ!"""
 
@@ -908,6 +803,7 @@ def anonymous_choice(call):
 
     bot.send_message(call.message.chat.id, text, parse_mode='HTML', reply_markup=markup)
     bot.answer_callback_query(call.id)
+
 
 # ========== КОМАНДА MYORDERS ==========
 @bot.message_handler(commands=['myorders'])
@@ -923,29 +819,30 @@ def myorders_cmd(message):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT order_id, game_name, size, likes, status, created_date, anonymous FROM orders WHERE user_id = ? ORDER BY created_date DESC LIMIT 10",
+        "SELECT order_id, game_name, size, likes, status, created_date, anonymous, priority FROM orders WHERE user_id = ? ORDER BY created_date DESC LIMIT 10",
         (user_id,)
     )
     user_orders = cursor.fetchall()
     conn.close()
 
     if not user_orders:
-        text = "👤 <b>МОИ ЗАКАЗЫ</b>\n\n📭 У вас пока нет заказов.\n\nСоздайте первый через /neworder"
+        text = "👤 <b>МОИ ЗАКАЗЫ</b>\n\nУ вас пока нет заказов.\n\nСоздайте первый через /neworder"
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
         bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
         return
 
-    text = f"👤 <b>МОИ ЗАКАЗЫ</b> ({len(user_orders)} шт.)\n\n"
+    text = f"👤 <b>МОИ ЗАКАЗЫ</b> ({len(user_orders)})\n\n"
     for order in user_orders:
-        order_id, game_name, size, likes, status, created_date, anonymous = order
+        order_id, game_name, size, likes, status, created_date, anonymous, priority = order
         status_emoji = "🟢" if status == 'active' else "🔴"
-        anon_badge = " 👻 Анонимно" if anonymous else ""
-        text += f"{status_emoji} <b>#{order_id}</b> | 🎮 {escape_html(game_name)}\n"
-        text += f"💾 {size} | ❤️ {likes}{anon_badge}\n"
-        text += "━\n"
+        priority_emoji = "🔴" if priority == 'urgent' else ""
+        anon_badge = " 👻" if anonymous else ""
+        text += f"{status_emoji} <b>#{order_id}</b>{priority_emoji} — {game_name}\n"
+        text += f"💾 {size} | ❤️ {likes}{anon_badge}\n\n"
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
+
 
 # ========== ПОИСК ИГР ==========
 @bot.message_handler(func=lambda m: m.text and not m.text.startswith('/') and m.chat.type == 'private')
@@ -956,40 +853,87 @@ def search_handler(message):
         bot.send_message(message.chat.id, "🚫 Вы заблокированы")
         return
 
-    query = message.text.strip().lower()
+    query = message.text.strip()
+    results = search_games(query)
 
-    if query in GAMES_DATABASE:
-        total_files = len(GAMES_DATABASE[query]) - 1
+    if len(results) == 1 and query.lower() == results[0].lower():
+        # Точное совпадение - сразу отправляем
+        total_files = len(GAMES_DATABASE[results[0]])
         bot.send_message(
             message.chat.id,
-            f"🎮 <b>{escape_html(message.text)}</b>\n📦 Файлов: {total_files}\n\n⏳ Загружаю...",
+            f"🎮 Найдено: {results[0]}\n📦 Файлов: {total_files}\n\n⏳ Отправляю...",
             parse_mode='HTML'
         )
-        send_game_files(message.chat.id, query, user_id)
-        return
-
-    similar = []
-    for game in GAMES_DATABASE.keys():
-        if query in game or game in query:
-            similar.append(game)
-
-    if similar:
-        text = f"❌ <b>'{escape_html(message.text)}' не найдено</b>\n\n🎯 <i>Возможно вы искали:</i>"
+        send_game_files(message.chat.id, results[0], user_id)
+    elif results:
+        # Показываем варианты
+        text = f"🔍 <b>Результаты поиска для \"{query}\":</b>\n\n"
         markup = types.InlineKeyboardMarkup(row_width=1)
-        for game in similar[:5]:
+        for i, game in enumerate(results, 1):
+            text += f"{i}. {game}\n"
             markup.add(types.InlineKeyboardButton(
-                f"🎮 {game.title()}",
+                f"📥 {game}",
                 callback_data=f"play_{game}"
             ))
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
 
         bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
     else:
-        text = f"❌ <b>'{escape_html(message.text)}' не найдено</b>\n\n📝 Создайте заказ через /neworder"
+        text = f"❌ Игра \"{query}\" не найдена\n\n📝 Создайте заказ через /neworder"
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("📝 Создать заказ", callback_data="new_order"))
 
         bot.send_message(message.chat.id, text, parse_mode='HTML', reply_markup=markup)
+
+
+# ========== УДАЛЕНИЕ ЗАКАЗОВ (АДМИН) ==========
+@bot.message_handler(commands=['deleteorder'])
+def delete_order_cmd(message):
+    if message.chat.type != 'private':
+        return
+
+    user_id = message.from_user.id
+    if not is_admin(user_id):
+        bot.send_message(message.chat.id, "❌ У вас нет прав администратора")
+        return
+
+    try:
+        parts = message.text.split(maxsplit=2)
+        order_id = int(parts[1])
+        reason = parts[2] if len(parts) > 2 else "Без причины"
+    except:
+        bot.send_message(message.chat.id, "❌ Использование: /deleteorder ID причина")
+        return
+
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id, game_name FROM orders WHERE order_id = ?", (order_id,))
+    order = cursor.fetchone()
+
+    if not order:
+        bot.send_message(message.chat.id, f"❌ Заказ #{order_id} не найден")
+        conn.close()
+        return
+
+    creator_id, game_name = order
+    cursor.execute("DELETE FROM orders WHERE order_id = ?", (order_id,))
+    cursor.execute("DELETE FROM order_likes WHERE order_id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+
+    # Уведомление создателю
+    try:
+        bot.send_message(
+            creator_id,
+            f"📋 Ваш заказ <b>#{order_id}</b> ({game_name}) был удалён администратором.\n\n"
+            f"<b>Причина:</b> {reason}",
+            parse_mode='HTML'
+        )
+    except:
+        logger.error(f"Не удалось уведомить пользователя {creator_id}")
+
+    bot.send_message(message.chat.id, f"✅ Заказ #{order_id} удалён")
+
 
 # ========== CALLBACK ОБРАБОТЧИК ==========
 @bot.callback_query_handler(func=lambda call: True)
@@ -999,11 +943,6 @@ def callback_handler(call):
     if call.data.startswith('like_'):
         if is_banned(user_id):
             bot.answer_callback_query(call.id, "❌ Вы заблокированы")
-            return
-
-        can_like_now, days_left = can_like(user_id)
-        if not can_like_now:
-            bot.answer_callback_query(call.id, f"❌ Следующий лайк через {days_left} дней", show_alert=True)
             return
 
         order_id = int(call.data.split('_')[1])
@@ -1025,7 +964,6 @@ def callback_handler(call):
         conn.commit()
         conn.close()
 
-        update_like_cooldown(user_id)
         bot.answer_callback_query(call.id, "❤️ Лайк поставлен!")
 
     elif call.data.startswith('play_'):
@@ -1049,12 +987,12 @@ def callback_handler(call):
         amount = int(call.data.split('_')[1])
 
         prices = {
-            10: [types.LabeledPrice("Поддержка автора", 10)],
-            50: [types.LabeledPrice("Поддержка автора", 50)],
-            100: [types.LabeledPrice("Поддержка автора", 100)],
-            300: [types.LabeledPrice("Поддержка автора", 300)],
-            500: [types.LabeledPrice("Поддержка автора", 500)],
-            1000: [types.LabeledPrice("Поддержка автора", 1000)]
+            10: [types.LabeledPrice("Поддержка бота", 10)],
+            20: [types.LabeledPrice("Поддержка бота", 20)],
+            30: [types.LabeledPrice("Поддержка бота", 30)],
+            40: [types.LabeledPrice("Поддержка бота", 40)],
+            50: [types.LabeledPrice("Поддержка бота", 50)],
+            100: [types.LabeledPrice("Поддержка бота", 100)]
         }
 
         try:
@@ -1077,7 +1015,7 @@ def callback_handler(call):
             bot.delete_message(call.message.chat.id, call.message.message_id)
         except:
             pass
-        show_donate_menu(call.message.chat.id, user_id)
+        show_donate_menu(call.message.chat.id)
 
     elif call.data == "show_orders":
         try:
@@ -1099,20 +1037,6 @@ def callback_handler(call):
         except:
             pass
         myorders_cmd(call.message)
-
-    elif call.data == "my_stats":
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-        except:
-            pass
-        stats_cmd(call.message)
-
-    elif call.data == "show_top":
-        try:
-            bot.delete_message(call.message.chat.id, call.message.message_id)
-        except:
-            pass
-        top_cmd(call.message)
 
     elif call.data == "show_help":
         try:
@@ -1141,10 +1065,12 @@ def callback_handler(call):
     elif call.data == "current_page":
         bot.answer_callback_query(call.id)
 
+
 # ========== ОБРАБОТЧИК ОПЛАТЫ ==========
 @bot.pre_checkout_query_handler(func=lambda query: True)
 def checkout_handler(pre_checkout_query):
     bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+
 
 @bot.message_handler(content_types=['successful_payment'])
 def successful_payment_handler(message):
@@ -1169,32 +1095,29 @@ def successful_payment_handler(message):
 
 💰 Оплачено: {amount} Stars
 
-Ваша поддержка помогает развивать бота и добавлять новые игры! ❤️"""
+Ваша поддержка помогает развивать бота! ❤️"""
 
     bot.send_message(message.chat.id, text, parse_mode='HTML')
 
+
 # ========== ЗАПУСК БОТА ==========
 if __name__ == "__main__":
-    print("=" * 60)
-    print("🤖 ЗАПУСК FERWES GAMES БОТА v7.0")
-    print("=" * 60)
+    print("=" * 50)
+    print("🤖 FERWES GAMES BOT")
+    print("=" * 50)
 
     logger.info("=" * 50)
-    logger.info("ЗАПУСК БОТА v7.0")
+    logger.info("ЗАПУСК БОТА")
     logger.info(f"База данных: {DB_FILE}")
+    logger.info(f"Игр в базе: {len(GAMES_DATABASE)}")
     logger.info("=" * 50)
 
-    clean_old_orders()
-
-    print(f"🎮 Игр в базе: {len(GAMES_DATABASE)}")
+    print(f"🎮 Игр загружено: {len(GAMES_DATABASE)}")
     print("💾 База данных: SQLite")
     print("📝 Логирование: bot.log")
-    print("👻 Анонимные заказы: ВКЛ")
-    print("🔢 Проверка размера: только цифры")
-    print("🛡 Защита от HTML-ошибок: ВКЛ")
-    print("=" * 60)
-    print("⚡ Бот запущен и готов к работе!")
-    print("=" * 60)
+    print("=" * 50)
+    print("⚡ Бот запущен!")
+    print("=" * 50)
 
     try:
         bot.polling(none_stop=True, skip_pending=True)

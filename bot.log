@@ -240,3 +240,58 @@
 2026-05-25 17:28:51,173 - INFO - User 7885915159: start - Запуск бота
 2026-05-25 17:28:59,699 - INFO - Отправлена игра mafia: the old country (21 файлов) для 7885915159
 2026-05-25 17:29:07,035 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=15)
+2026-06-05 04:10:14,441 - INFO - База данных инициализирована
+2026-06-05 04:10:14,444 - INFO - ==================================================
+2026-06-05 04:10:14,444 - INFO - ЗАПУСК БОТА
+2026-06-05 04:10:14,444 - INFO - База данных: .\bot_database.db
+2026-06-05 04:10:14,444 - INFO - Игр в базе: 146
+2026-06-05 04:10:14,445 - INFO - ==================================================
+2026-06-05 04:10:35,932 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x2199fe06ba0>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
+2026-06-05 04:11:05,270 - INFO - База данных инициализирована
+2026-06-05 04:11:05,271 - INFO - ==================================================
+2026-06-05 04:11:05,271 - INFO - ЗАПУСК БОТА
+2026-06-05 04:11:05,271 - INFO - База данных: .\bot_database.db
+2026-06-05 04:11:05,271 - INFO - Игр в базе: 146
+2026-06-05 04:11:05,271 - INFO - ==================================================
+2026-06-05 04:11:17,313 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by NameResolutionError("HTTPSConnection(host='api.telegram.org', port=443): Failed to resolve 'api.telegram.org' ([Errno 11001] getaddrinfo failed)"))
+2026-06-05 04:11:31,994 - INFO - База данных инициализирована
+2026-06-05 04:11:31,996 - INFO - ==================================================
+2026-06-05 04:11:31,996 - INFO - ЗАПУСК БОТА
+2026-06-05 04:11:31,996 - INFO - База данных: .\bot_database.db
+2026-06-05 04:11:31,996 - INFO - Игр в базе: 146
+2026-06-05 04:11:31,996 - INFO - ==================================================
+2026-06-05 04:11:39,495 - INFO - База данных инициализирована
+2026-06-05 04:11:39,496 - INFO - ==================================================
+2026-06-05 04:11:39,497 - INFO - ЗАПУСК БОТА
+2026-06-05 04:11:39,497 - INFO - База данных: .\bot_database.db
+2026-06-05 04:11:39,497 - INFO - Игр в базе: 146
+2026-06-05 04:11:39,497 - INFO - ==================================================
+2026-06-05 04:11:51,557 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by NameResolutionError("HTTPSConnection(host='api.telegram.org', port=443): Failed to resolve 'api.telegram.org' ([Errno 11001] getaddrinfo failed)"))
+2026-06-05 04:13:00,341 - INFO - База данных инициализирована
+2026-06-05 04:13:00,342 - INFO - ==================================================
+2026-06-05 04:13:00,342 - INFO - ЗАПУСК БОТА
+2026-06-05 04:13:00,342 - INFO - База данных: .\bot_database.db
+2026-06-05 04:13:00,342 - INFO - Игр в базе: 146
+2026-06-05 04:13:00,342 - INFO - ==================================================
+2026-06-05 04:13:12,407 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by NameResolutionError("HTTPSConnection(host='api.telegram.org', port=443): Failed to resolve 'api.telegram.org' ([Errno 11001] getaddrinfo failed)"))
+2026-06-05 04:14:30,781 - INFO - База данных инициализирована
+2026-06-05 04:14:30,782 - INFO - ==================================================
+2026-06-05 04:14:30,782 - INFO - ЗАПУСК БОТА
+2026-06-05 04:14:30,782 - INFO - База данных: .\bot_database.db
+2026-06-05 04:14:30,783 - INFO - Игр в базе: 146
+2026-06-05 04:14:30,783 - INFO - ==================================================
+2026-06-05 04:14:42,828 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by NameResolutionError("HTTPSConnection(host='api.telegram.org', port=443): Failed to resolve 'api.telegram.org' ([Errno 11001] getaddrinfo failed)"))
+2026-06-05 04:17:27,093 - INFO - База данных инициализирована
+2026-06-05 04:17:27,095 - INFO - ==================================================
+2026-06-05 04:17:27,095 - INFO - ЗАПУСК БОТА
+2026-06-05 04:17:27,095 - INFO - База данных: .\bot_database.db
+2026-06-05 04:17:27,095 - INFO - Игр в базе: 146
+2026-06-05 04:17:27,095 - INFO - ==================================================
+2026-06-05 04:17:47,109 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x1bcc8f96ba0>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
+2026-06-05 04:21:48,467 - INFO - База данных инициализирована
+2026-06-05 04:21:48,469 - INFO - ==================================================
+2026-06-05 04:21:48,469 - INFO - ЗАПУСК БОТА
+2026-06-05 04:21:48,469 - INFO - База данных: .\bot_database.db
+2026-06-05 04:21:48,469 - INFO - Игр в базе: 146
+2026-06-05 04:21:48,469 - INFO - ==================================================
+2026-06-05 04:22:08,492 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x235c75a6ba0>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
