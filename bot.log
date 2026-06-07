@@ -295,3 +295,7 @@
 2026-06-05 04:21:48,469 - INFO - Игр в базе: 146
 2026-06-05 04:21:48,469 - INFO - ==================================================
 2026-06-05 04:22:08,492 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8781916300:AAHap0DI80QGxXJdbuyLcwl8ielIeGU064s/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x235c75a6ba0>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
+2026-06-07 21:27:06,106 - INFO - База данных инициализирована
+2026-06-07 21:27:26,173 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x26ddcb4ee40>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
+2026-06-07 21:28:26,161 - INFO - База данных инициализирована
+2026-06-07 21:28:46,179 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x25e5951ee40>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
