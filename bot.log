@@ -310,3 +310,11 @@
 2026-06-07 23:22:54,922 - ERROR - Ошибка отправки фото 2005: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message to copy not found
 2026-06-07 23:22:58,216 - ERROR - Ошибка отправки фото 2005: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message to copy not found
 2026-06-07 23:55:18,524 - CRITICAL - Ошибка: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-06-08 11:58:05,216 - INFO - База данных инициализирована
+2026-06-08 11:58:10,446 - CRITICAL - Ошибка: A request to the Telegram API was unsuccessful. Error code: 409. Description: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-06-08 11:58:26,649 - INFO - База данных инициализирована
+2026-06-08 11:58:39,211 - INFO - База данных инициализирована
+2026-06-08 11:59:31,013 - INFO - База данных инициализирована
+2026-06-08 11:59:38,000 - CRITICAL - Ошибка: A request to the Telegram API was unsuccessful. Error code: 409. Description: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-06-08 12:08:23,225 - INFO - База данных инициализирована
+2026-06-08 12:15:52,821 - INFO - База данных инициализирована
