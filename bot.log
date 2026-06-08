@@ -299,3 +299,14 @@
 2026-06-07 21:27:26,173 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x26ddcb4ee40>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
 2026-06-07 21:28:26,161 - INFO - База данных инициализирована
 2026-06-07 21:28:46,179 - CRITICAL - Критическая ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Max retries exceeded with url: /bot8456295069:AAGz48djuL19fYnn9FCz8DgJRQgIO6rLlq0/getUpdates?offset=-1&timeout=20 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.telegram.org', port=443) at 0x25e5951ee40>, 'Connection to api.telegram.org timed out. (connect timeout=20)'))
+2026-06-07 23:22:28,648 - INFO - База данных инициализирована
+2026-06-07 23:22:52,621 - INFO - База данных инициализирована
+2026-06-07 23:22:52,624 - INFO - ==================================================
+2026-06-07 23:22:52,624 - INFO - ЗАПУСК БОТА v8.0
+2026-06-07 23:22:52,625 - INFO - База данных: .\bot_database.db
+2026-06-07 23:22:52,625 - INFO - Игр в базе: 148
+2026-06-07 23:22:52,625 - INFO - Фото для команд: СТАРТ/ХЕЛП/ОРДЕРС/НЬЮОРДЕР/МАЙОРДЕРС/ДОНАТ
+2026-06-07 23:22:52,625 - INFO - ==================================================
+2026-06-07 23:22:54,922 - ERROR - Ошибка отправки фото 2005: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message to copy not found
+2026-06-07 23:22:58,216 - ERROR - Ошибка отправки фото 2005: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message to copy not found
+2026-06-07 23:55:18,524 - CRITICAL - Ошибка: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
