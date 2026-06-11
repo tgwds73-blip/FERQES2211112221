@@ -321,3 +321,14 @@
 2026-06-11 17:22:44,689 - INFO - База данных инициализирована
 2026-06-11 17:22:44,692 - INFO - Загружено игр: 17 HQ, 0 LQ
 2026-06-11 17:22:48,859 - CRITICAL - Ошибка: A request to the Telegram API was unsuccessful. Error code: 409. Description: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-06-11 17:42:35,254 - INFO - База данных инициализирована
+2026-06-11 17:42:35,265 - INFO - Мигрировано 149 игр в LQ
+2026-06-11 17:42:35,267 - INFO - Загружено: 0 HQ, 149 LQ
+2026-06-11 17:42:47,911 - INFO - База данных инициализирована
+2026-06-11 17:42:47,919 - INFO - Мигрировано 149 игр в LQ
+2026-06-11 17:42:47,921 - INFO - Загружено: 0 HQ, 149 LQ
+2026-06-11 17:42:59,993 - CRITICAL - Ошибка: no such column: unique_id
+2026-06-11 17:49:03,326 - INFO - Старая БД удалена
+2026-06-11 17:49:03,365 - INFO - База данных инициализирована
+2026-06-11 17:49:03,381 - INFO - Загружено 149 игр в LQ
+2026-06-11 18:14:45,427 - CRITICAL - Ошибка: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=15)
